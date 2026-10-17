@@ -9,7 +9,7 @@ from app.agent import TasteBridgeAgent
 
 app = FastAPI(title="TasteBridge")
 agent = TasteBridgeAgent()
-STATIC = Path(__file__).resolve().parent.parent / "static"
+STATIC = Path(__file__).resolve().parent / "static"
 
 
 class TranslateRequest(BaseModel):

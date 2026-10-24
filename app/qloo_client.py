@@ -1,4 +1,4 @@
-﻿"""qloo_client.py - Qloo adapter: mock now, real harness when the key arrives."""
+"""qloo_client.py - Qloo adapter: mock now, real harness when the key arrives."""
 import json
 import os
 import subprocess
@@ -23,6 +23,79 @@ MOCK_EQUIVALENTS = {
 }
 
 
+AR_CITIES = {
+    "دبي": "dubai", "دبى": "dubai", "القاهرة": "cairo", "القاهره": "cairo",
+    "لندن": "london", "الدوحة": "doha", "الدوحه": "doha", "باريس": "paris",
+    "نيويورك": "new york", "الرياض": "riyadh", "جدة": "jeddah", "جده": "jeddah",
+    "أبوظبي": "abu dhabi", "ابوظبي": "abu dhabi", "عمّان": "amman", "عمان": "amman",
+}
+
+
+def _norm_city(city):
+    c = (city or "").strip()
+    return AR_CITIES.get(c, c).lower()
+
+
+def _hay(entity):
+    p = entity.get("properties", {}) or {}
+    geo = p.get("geocode", {}) or {}
+    parts = [geo.get("city") or "", geo.get("admin1_region") or "", geo.get("name") or "",
+             p.get("address") or ""]
+    for loc in (p.get("localities") or []):
+        parts.append(loc.get("name") or "")
+    return " | ".join(parts).lower()
+
+
+DOMAIN_TYPES = {"dining": "place", "music": "artist", "film": "movie", "fashion": "brand"}
+
+
+def _qloo_json(cmd):
+    # Windows: qloo is an npm .cmd shim (not .exe) -> subprocess needs cmd /c
+    full = (["cmd", "/c"] + cmd) if os.name == "nt" else cmd
+    out = subprocess.run(full, capture_output=True, text=True, timeout=90, encoding="utf-8")
+    if out.returncode != 0:
+        raise RuntimeError(f"qloo failed: {out.stderr.strip()[:300]}")
+    data = json.loads(out.stdout)
+    if isinstance(data, dict) and data.get("error"):
+        return []
+    return data if isinstance(data, list) else []
+
+
+def _to_card(e, city=""):
+    p = e.get("properties", {}) or {}
+    geo = p.get("geocode", {}) or {}
+    q = e.get("query", {}) or {}
+    img = (p.get("image") or {}).get("url")
+    if not img and p.get("images"):
+        img = p["images"][0].get("url")
+    city_name = geo.get("city") or ""
+    hay = _hay(e)
+    return {
+        "name": e.get("name", ""),
+        "why": p.get("description") or p.get("short_description") or "",
+        "affinity": round(q.get("affinity") or e.get("popularity") or 0, 4),
+        "rating": p.get("business_rating"),
+        "image": img,
+        "city": city_name,
+        "_city_match": (city.lower() in hay) if city else True,
+    }
+
+
+def _seed_for(taste, type_, city=""):
+    city_en = _norm_city(city)
+    queries = ([taste + " " + city_en, taste] if city_en else [taste])
+    for q in queries:
+        hits = _qloo_json(["qloo", "api", "search", "--query", q, "--json"])[:8]
+        typed = [h for h in hits if type_ in h.get("types", [])]
+        if city_en:
+            in_city = [h for h in typed if city_en in _hay(h)]
+            if in_city:
+                return in_city[0]
+        if typed:
+            return typed[0]
+    return None
+
+
 class QlooClient:
     """Thin adapter: mock mode until the hackathon key arrives, then harness mode."""
 
@@ -35,17 +108,39 @@ class QlooClient:
 
     def find_equivalents(self, taste, domain, city):
         if self.mode == "mock":
-            return {"taste": taste, "domain": domain, "city": city,
+            return {"taste": taste, "domain": domain, "city": city, "mode": self.mode,
                     "results": MOCK_EQUIVALENTS.get(domain, [])}
-        return self._harness(["exec", "--json", "taste", "equivalents",
-                              "--taste", taste, "--domain", domain, "--city", city])
+        type_ = DOMAIN_TYPES.get(domain, "place")
+        seed = _seed_for(taste, type_, city)
+        if not seed:
+            return {"taste": taste, "domain": domain, "city": city, "mode": self.mode, "results": []}
+        ranked = _qloo_json(["qloo", "insights", "--type", type_,
+                             "--signal-entities", seed["entity_id"], "--json"])
+        cards = [_to_card(e, city) for e in ranked]
+        in_city = [c for c in cards if c.get("_city_match")]
+        return {"taste": taste, "domain": domain, "city": city, "mode": self.mode,
+                "seed": seed.get("name"), "results": (in_city or cards)[:6]}
 
     def recommend_for_group(self, tastes, domain):
         if self.mode == "mock":
-            return {"tastes": tastes, "domain": domain,
+            return {"tastes": tastes, "domain": domain, "mode": self.mode,
                     "results": MOCK_EQUIVALENTS.get(domain, [])[:3]}
-        return self._harness(["exec", "--json", "taste", "recommend",
-                              "--tastes", json.dumps(tastes), "--domain", domain])
+        type_ = DOMAIN_TYPES.get(domain, "place")
+        ids = []
+        for t in tastes:
+            s = _seed_for(t, type_)
+            if s:
+                ids.append(s["entity_id"])
+        if not ids:
+            return {"tastes": tastes, "domain": domain, "mode": self.mode, "results": []}
+        try:
+            ranked = _qloo_json(["qloo", "insights", "--type", type_,
+                                 "--signal-entities", ",".join(ids[:3]), "--json"])
+        except Exception:
+            ranked = _qloo_json(["qloo", "insights", "--type", type_,
+                                 "--signal-entities", ids[0], "--json"])
+        return {"tastes": tastes, "domain": domain, "mode": self.mode,
+                "results": [_to_card(e) for e in ranked[:3]]}
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -10,20 +10,30 @@ body { font-family: "Segoe UI", Tahoma, sans-serif; background: #faf7f2; color: 
 header { background: linear-gradient(135deg, #6b3fa0, #c05a2e); color: #fff; padding: 28px 20px; text-align: center; }
 header h1 { font-size: 1.8rem; margin-bottom: 6px; }
 header p { opacity: 0.9; font-size: 0.95rem; }
+.demo-badge { display: inline-block; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); border-radius: 12px; padding: 2px 10px; font-size: 0.75rem; margin-top: 8px; }
 nav { display: flex; justify-content: center; gap: 10px; margin: 18px auto; }
 nav button, .lang { background: #fff; border: 2px solid #6b3fa0; color: #6b3fa0; padding: 8px 18px; border-radius: 24px; cursor: pointer; font-size: 0.95rem; font-weight: 600; }
 nav button.active { background: #6b3fa0; color: #fff; }
 .lang { position: fixed; top: 14px; left: 14px; z-index: 5; border-color: #fff; color: #fff; background: transparent; }
 main { max-width: 720px; margin: 0 auto; padding: 0 16px 40px; }
 .panel { background: #fff; border-radius: 14px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 16px; }
-input, textarea, select { width: 100%; padding: 11px 14px; margin: 6px 0 12px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 1rem; font-family: inherit; }
-input:focus, textarea:focus { border-color: #6b3fa0; outline: none; }
+input, select { width: 100%; padding: 11px 14px; margin: 6px 0 12px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 1rem; font-family: inherit; }
+input:focus { border-color: #6b3fa0; outline: none; }
 .go { width: 100%; padding: 13px; border: none; border-radius: 10px; background: linear-gradient(135deg, #6b3fa0, #c05a2e); color: #fff; font-size: 1.05rem; font-weight: 700; cursor: pointer; }
 .go:disabled { opacity: 0.6; }
+.hint { font-size: 0.8rem; color: #888; margin: -6px 0 10px; }
 .domain-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .domain-row label { border: 1.5px solid #ddd; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
 .domain-row input { display: none; }
 .domain-row input:checked + span { color: #6b3fa0; font-weight: 700; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.preset { border: 1.5px dashed #6b3fa0; color: #6b3fa0; background: transparent; border-radius: 18px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit; }
+.chipbox { border: 1.5px solid #ddd; border-radius: 10px; padding: 6px 10px; margin: 6px 0 4px; }
+.chipbox input { border: none; margin: 0; padding: 8px 4px; }
+.chipbox input:focus { outline: none; }
+.chip { display: inline-block; background: #f0e8f7; color: #6b3fa0; border-radius: 16px; padding: 4px 12px; margin: 3px; font-size: 0.9rem; }
+.chip b { cursor: pointer; margin-inline-start: 8px; color: #c05a2e; }
+#chipCount { font-size: 0.8rem; color: #888; margin: 2px 0 10px; }
 .card { background: #fff; border-right: 4px solid #c05a2e; border-radius: 10px; padding: 14px 16px; margin: 10px 0; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
 .card h3 { color: #6b3fa0; font-size: 1.05rem; }
 .card p { font-size: 0.92rem; color: #555; margin-top: 4px; }
@@ -31,97 +41,212 @@ input:focus, textarea:focus { border-color: #6b3fa0; outline: none; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, #6b3fa0, #c05a2e); }
 .domain-title { margin: 16px 0 4px; color: #c05a2e; font-size: 1.05rem; text-transform: capitalize; }
 .empty { color: #999; font-size: 0.9rem; padding: 6px 0; }
+.demo-badge.live { background: rgba(46,160,67,0.25); border-color: rgba(46,160,67,0.7); }
+.reason { background: #f6f1fa; border: 1.5px dashed #6b3fa0; border-radius: 10px; padding: 12px 14px; margin: 12px 0; font-size: 0.9rem; color: #444; }
+.reason h4 { color: #6b3fa0; margin-bottom: 6px; font-size: 0.95rem; }
+.reason ol { margin: 0 18px 6px 18px; }
+.score { font-size: 0.72rem; background: #eee; border-radius: 8px; padding: 1px 8px; color: #6b3fa0; vertical-align: middle; }
 </style>
 </head>
 <body>
-<button class="lang" onclick="toggleLang()">EN</button>
+<button class="lang" onclick="toggleLang()" data-i18n="langBtn">EN</button>
 <header>
-<h1 id="t-title">ثقافتي — TasteBridge</h1>
-<p id="t-sub">وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo</p>
+<h1 id="t-title" data-i18n="title">ثقافتي — TasteBridge</h1>
+<p id="t-sub" data-i18n="sub">وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo</p>
+<br><span class="demo-badge" id="modeBadge">بيانات تجريبية</span>
 </header>
 <nav>
-<button id="tab-translate" class="active" onclick="showMode(0)">ترجمة ثقافية</button>
-<button id="tab-group" onclick="showMode(1)">تفاوض المجموعة</button>
+<button id="tab-translate" class="active" onclick="showMode(0)" data-i18n="tabSolo">وحدك</button>
+<button id="tab-group" onclick="showMode(1)" data-i18n="tabGroup">مع مجموعتك</button>
 </nav>
 <main>
 <div class="panel" id="panel-translate">
+<div class="presets" id="presets"></div>
 <input id="taste" placeholder="مثال: مقاهي جدي القديمة">
+<div class="hint" data-i18n="h_taste"></div>
 <input id="city" placeholder="مثال: دبي">
+<div class="hint" data-i18n="h_city"></div>
 <div class="domain-row" id="domains">
-<label><input type="checkbox" value="dining" checked><span>مطاعم</span></label>
-<label><input type="checkbox" value="music" checked><span>موسيقى</span></label>
-<label><input type="checkbox" value="film" checked><span>سينما</span></label>
-<label><input type="checkbox" value="fashion" checked><span>موضة</span></label>
+<label><input type="checkbox" value="dining" checked><span data-i18n="d_dining">مطاعم</span></label>
+<label><input type="checkbox" value="music" checked><span data-i18n="d_music">موسيقى</span></label>
+<label><input type="checkbox" value="film" checked><span data-i18n="d_film">سينما</span></label>
+<label><input type="checkbox" value="fashion" checked><span data-i18n="d_fashion">موضة</span></label>
 </div>
-<button class="go" id="btn-translate" onclick="doTranslate()">ترجم ذوقي</button>
+<button class="go" id="btn-translate" onclick="doTranslate()" data-i18n="go">اكتشف نظيرك</button>
 </div>
 <div class="panel" id="panel-group" style="display:none">
-<textarea id="tastes" rows="3" placeholder="اذق الجميع، مفصولة بفواصل: أبي، أنا، أطفالي"></textarea>
+<div class="chipbox"><div id="chips" style="display:inline"></div><input id="tasteInput" placeholder="اكتب ذوقه واضغط Enter" onkeydown="chipKey(event)"></div>
+<div id="chipCount"></div>
+<div class="hint" data-i18n="h_tastes"></div>
 <input id="gcity" placeholder="المدينة">
 <select id="gdomain">
-<option value="dining">مطاعم</option>
-<option value="music">موسيقى</option>
-<option value="film">سينما</option>
-<option value="fashion">موضة</option>
+<option value="dining" data-i18n="d_dining">مطاعم</option>
+<option value="music" data-i18n="d_music">موسيقى</option>
+<option value="film" data-i18n="d_film">سينما</option>
+<option value="fashion" data-i18n="d_fashion">موضة</option>
 </select>
-<button class="go" onclick="doNegotiate()">فاوض على خطة واحدة</button>
+<button class="go" id="btn-negotiate" onclick="doNegotiate()" data-i18n="go_g">اتفقوا على خطة</button>
 </div>
 <div id="results"></div>
 </main>
 <script>
 const S = {
-  en: { title: "TasteBridge", sub: "An agent translating your home taste to your new city - powered by Qloo",
-        ph_taste: "e.g. my grandfather old cafes", ph_city: "e.g. Dubai", go: "Translate my taste",
-        group: "Group negotiation", ph_tastes: "everyone tastes, comma separated", go_g: "Negotiate one plan" },
-  ar: { title: "ثقافتي — TasteBridge", sub: "وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo",
-        ph_taste: "مثال: مقاهي جدي القديمة", ph_city: "مثال: دبي", go: "ترجم ذوقي",
-        group: "تفاوض المجموعة", ph_tastes: "اذق الجميع، مفصولة بفواصل", go_g: "فاوض على خطة واحدة" }
+  en: { title: "TasteBridge — Thaqafati",
+        sub: "An agent that translates your home taste to your new city — powered by Qloo",
+        demo: "Demo data", live: "Live Qloo data", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
+        ph_taste: "e.g. koshari", ph_city: "e.g. Dubai",
+        h_taste: "Type anything you love back home — search works in English (e.g. koshari, Fairuz)",
+        h_city: "The city you live in now",
+        go: "Discover my equivalent",
+        ph_tasteInput: "type a taste and press Enter", people: "people",
+        h_tastes: "Each person has a taste — the agent finds the meeting point",
+        ph_gcity: "e.g. Dubai",
+        go_g: "Agree on one plan",
+        d_dining: "Dining", d_music: "Music", d_film: "Film", d_fashion: "Fashion",
+        empty: "No results yet — try an example.", langBtn: "ع" },
+  ar: { title: "ثقافتي — TasteBridge",
+        sub: "وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo",
+        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
+        ph_taste: "مثال: koshari", ph_city: "مثال: دبي",
+        h_taste: "اكتب أي حاجة بتحبها في بلدك — بالإنجليزي للبحث (مثال: koshari أو Fairuz)",
+        h_city: "المدينة اللي عايش فيها دلوقتي",
+        go: "اكتشف نظيرك",
+        ph_tasteInput: "اكتب ذوقه واضغط Enter", people: "أشخاص",
+        h_tastes: "كل واحد ذوقه — الوكيل يلاقي نقطة الالتقاء",
+        ph_gcity: "مثال: دبي",
+        go_g: "اتفقوا على خطة",
+        d_dining: "مطاعم", d_music: "موسيقى", d_film: "سينما", d_fashion: "موضة",
+        empty: "لا نتائج — جرّب مثالاً.", langBtn: "EN" }
 };
+const PRESETS = [
+  { t: "كشري", q: "koshari", c: "Dubai" },
+  { t: "مقاهي جدي القديمة", q: "egyptian cafe", c: "London" },
+  { t: "أغاني فيروز", q: "Fairuz", c: "Doha" }
+];
 let lang = "ar";
-function toggleLang() {
-  lang = lang === "ar" ? "en" : "ar";
+let lastMode = null;
+let groupTastes = [];
+let last = null;
+function applyLang() {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-  document.querySelector(".lang").textContent = lang === "ar" ? "EN" : "ع";
-  document.getElementById("t-title").textContent = S[lang].title;
-  document.getElementById("t-sub").textContent = S[lang].sub;
-  document.getElementById("taste").placeholder = S[lang].ph_taste;
-  document.getElementById("city").placeholder = S[lang].ph_city;
-  document.getElementById("tastes").placeholder = S[lang].ph_tastes;
-  document.getElementById("btn-translate").textContent = S[lang].go;
+  updateBadge();
+  document.querySelectorAll("[data-i18n]").forEach(function(el) {
+    const k = el.getAttribute("data-i18n");
+    if (S[lang][k] !== undefined) el.textContent = S[lang][k];
+  });
+  ["taste", "city", "gcity", "tasteInput"].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el && S[lang]["ph_" + id] !== undefined) el.placeholder = S[lang]["ph_" + id];
+  });
+  renderChips();
+  renderResults();
 }
+function toggleLang() { lang = lang === "ar" ? "en" : "ar"; applyLang(); }
 function showMode(n) {
   document.getElementById("panel-translate").style.display = n === 0 ? "block" : "none";
   document.getElementById("panel-group").style.display = n === 1 ? "block" : "none";
   document.getElementById("tab-translate").className = n === 0 ? "active" : "";
   document.getElementById("tab-group").className = n === 1 ? "active" : "";
 }
+function renderPresets() {
+  document.getElementById("presets").innerHTML = PRESETS.map(function(p, i) {
+    return '<button class="preset" onclick="applyPreset(' + i + ')">' + p.t + " &larr; " + p.c + '</button>';
+  }).join("");
+}
+function applyPreset(i) {
+  document.getElementById("taste").value = PRESETS[i].q;
+  document.getElementById("city").value = PRESETS[i].c;
+  showMode(0);
+  doTranslate();
+}
+function renderChips() {
+  document.getElementById("chips").innerHTML = groupTastes.map(function(t, i) {
+    return '<span class="chip">' + t + '<b onclick="removeChip(' + i + ')">&times;</b></span>';
+  }).join("");
+  document.getElementById("chipCount").textContent = groupTastes.length + " " + S[lang].people;
+}
+function addChip(v) {
+  v = v.trim().replace(/[,،;]+$/g, "");
+  if (!v || groupTastes.includes(v)) return;
+  groupTastes.push(v);
+  renderChips();
+}
+function removeChip(i) { groupTastes.splice(i, 1); renderChips(); }
+function chipKey(e) {
+  if (e.key === "Enter" || e.key === "," || e.key === "،") {
+    e.preventDefault();
+    addChip(e.target.value);
+    e.target.value = "";
+  }
+}
 function card(item) {
   const pct = Math.round((item.affinity || 0) * 100);
-  return "<div class=card><h3>" + item.name + "</h3><p>" + (item.why || "") + "</p>
-    + "<div class=bar><i style=width:" + pct + "%></i></div></div>";
+  const why = (lang === "ar" && item.why_ar) ? item.why_ar : (item.why || "");
+  return '<div class="card"><h3>' + item.name + ' <span class="score">' + pct + '% ' + S[lang].score + '</span></h3><p>' + why + '</p>'
+    + '<div class="bar"><i style="width:' + pct + '%"></i></div></div>';
+}
+function reasonHtml(mode) {
+  let rows = "";
+  if (mode === "translate") {
+    const r = last.req;
+    const dnames = r.domains.map(function(d) { return S[lang]["d_" + d] || d; }).join("، ");
+    rows = "<li>" + S[lang].reason_step1 + ': "' + r.taste + '" &larr; ' + r.city + "</li>"
+         + "<li>" + S[lang].reason_step2 + ": " + dnames + " (" + r.domains.length + " " + S[lang].reason_domains + ")</li>"
+         + "<li>" + S[lang].reason_step3 + "</li>";
+  } else {
+    const r = last.req;
+    rows = "<li>" + S[lang].reason_step1 + ": " + r.tastes.length + " " + S[lang].people + " &larr; " + r.city + "</li>"
+         + "<li>" + S[lang].reason_step2 + ": " + (S[lang]["d_" + r.domain] || r.domain) + "</li>"
+         + "<li>" + S[lang].reason_step3 + "</li>";
+  }
+  let total = 0;
+  if (mode === "translate") { last.data.domains.forEach(function(d) { total += d.results.length; }); }
+  else { total = last.data.results.length; }
+  return '<div class="reason"><h4>&#129504; ' + S[lang].reason_title + '</h4><ol>' + rows + '</ol>'
+       + '<div class="hint">' + total + " " + S[lang].reason_results + " &bull; " + S[lang].demo + "</div></div>";
+}
+function renderResults() {
+  if (!last) return;
+  let html = reasonHtml(last.mode);
+  if (last.mode === "translate") {
+    for (const d of last.data.domains) {
+      html += "<div class=domain-title>" + (S[lang]["d_" + d.domain] || d.domain) + "</div>";
+      html += d.results.length ? d.results.map(card).join("") : "<div class=empty>" + S[lang].empty + "</div>";
+    }
+  } else {
+    html = last.data.results.map(card).join("") || "<div class=empty>" + S[lang].empty + "</div>";
+  }
+  document.getElementById("results").innerHTML = html;
 }
 async function post(url, body) {
   const r = await fetch(url, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
   return r.json();
 }
 async function doTranslate() {
-  const domains = [...document.querySelectorAll("#domains input:checked")].map(x => x.value);
+  const domains = [...document.querySelectorAll("#domains input:checked")].map(function(x) { return x.value; });
   const data = await post("/api/translate", { taste: document.getElementById("taste").value,
     city: document.getElementById("city").value, domains: domains });
-  let html = "";
-  for (const d of data.domains) {
-    html += "<div class=domain-title>" + d.domain + "</div>";
-    html += d.results.length ? d.results.map(card).join("") : "<div class=empty>—</div>";
-  }
-  document.getElementById("results").innerHTML = html;
+  lastMode = data.mode || null;
+  last = { mode: "translate", data: data, req: { taste: document.getElementById("taste").value, city: document.getElementById("city").value, domains: domains } };
+  renderResults();
 }
 async function doNegotiate() {
-  const tastes = document.getElementById("tastes").value.split(",").map(s => s.trim()).filter(Boolean);
-  const data = await post("/api/negotiate", { tastes: tastes, city: document.getElementById("gcity").value,
+  const data = await post("/api/negotiate", { tastes: groupTastes, city: document.getElementById("gcity").value,
     domain: document.getElementById("gdomain").value });
-  document.getElementById("results").innerHTML = data.results.map(card).join("") || "<div class=empty>—</div>";
+  lastMode = data.mode || null;
+  last = { mode: "negotiate", data: data, req: { tastes: groupTastes, city: document.getElementById("gcity").value, domain: document.getElementById("gdomain").value } };
+  renderResults();
 }
+renderPresets();
+function updateBadge() {
+  const b = document.getElementById("modeBadge");
+  if (!b) return;
+  const live = lastMode === "harness";
+  b.textContent = live ? S[lang].live : S[lang].demo;
+  b.className = "demo-badge" + (live ? " live" : "");
+}
+applyLang();
 </script>
 </body>
 </html>

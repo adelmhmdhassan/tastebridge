@@ -62,9 +62,9 @@ input:focus { border-color: #6b3fa0; outline: none; }
 <main>
 <div class="panel" id="panel-translate">
 <div class="presets" id="presets"></div>
-<input id="taste" placeholder="مثال: مقاهي جدي القديمة">
+<input id="taste" placeholder="مثال: مقاهي جدي القديمة" onkeydown="if(event.key==='Enter')doTranslate()">
 <div class="hint" data-i18n="h_taste"></div>
-<input id="city" placeholder="مثال: دبي">
+<input id="city" placeholder="مثال: دبي" onkeydown="if(event.key==='Enter')doTranslate()">
 <div class="hint" data-i18n="h_city"></div>
 <div class="domain-row" id="domains">
 <label><input type="checkbox" value="dining" checked><span data-i18n="d_dining">مطاعم</span></label>

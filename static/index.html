@@ -93,7 +93,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 const S = {
   en: { title: "TasteBridge — Thaqafati",
         sub: "An agent that translates your home taste to your new city — powered by Qloo",
-        demo: "Demo data", live: "Live Qloo data", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
+        demo: "Demo data", live: "Live Qloo data", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
         ph_taste: "e.g. koshari", ph_city: "e.g. Dubai",
         h_taste: "Type anything you love back home — search works in English (e.g. koshari, Fairuz)",
         h_city: "The city you live in now",
@@ -106,7 +106,7 @@ const S = {
         empty: "No results yet — try an example.", langBtn: "ع" },
   ar: { title: "ثقافتي — TasteBridge",
         sub: "وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo",
-        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
+        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
         ph_taste: "مثال: koshari", ph_city: "مثال: دبي",
         h_taste: "اكتب أي حاجة بتحبها في بلدك — بالإنجليزي للبحث (مثال: koshari أو Fairuz)",
         h_city: "المدينة اللي عايش فيها دلوقتي",
@@ -220,13 +220,23 @@ function renderResults() {
   document.getElementById("results").innerHTML = html;
 }
 async function post(url, body) {
-  const r = await fetch(url, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
-  return r.json();
+  try {
+    const r = await fetch(url, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body) });
+    if (!r.ok) return { __error: r.status };
+    return await r.json();
+  } catch (e) {
+    return { __error: "network" };
+  }
+}
+function showError() {
+  last = null;
+  document.getElementById("results").innerHTML = "<div class=reason><h4>&#9888;</h4><div class=hint>" + S[lang].err + "</div></div>";
 }
 async function doTranslate() {
   const domains = [...document.querySelectorAll("#domains input:checked")].map(function(x) { return x.value; });
   const data = await post("/api/translate", { taste: document.getElementById("taste").value,
     city: document.getElementById("city").value, domains: domains });
+  if (data.__error) { showError(); return; }
   lastMode = data.mode || null;
   last = { mode: "translate", data: data, req: { taste: document.getElementById("taste").value, city: document.getElementById("city").value, domains: domains } };
   renderResults();
@@ -234,6 +244,7 @@ async function doTranslate() {
 async function doNegotiate() {
   const data = await post("/api/negotiate", { tastes: groupTastes, city: document.getElementById("gcity").value,
     domain: document.getElementById("gdomain").value });
+  if (data.__error) { showError(); return; }
   lastMode = data.mode || null;
   last = { mode: "negotiate", data: data, req: { tastes: groupTastes, city: document.getElementById("gcity").value, domain: document.getElementById("gdomain").value } };
   renderResults();

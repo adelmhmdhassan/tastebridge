@@ -1,4 +1,4 @@
-﻿"""agent.py - TasteBridge agent: cultural translation + group negotiation."""
+"""agent.py - TasteBridge agent: cultural translation + group negotiation."""
 from .qloo_client import QlooClient
 
 DOMAINS = ("dining", "music", "film", "fashion")
@@ -18,7 +18,7 @@ class TasteBridgeAgent:
         return {"taste": taste, "city": city, "domains": out}
 
     def negotiate(self, tastes, city, domain="dining"):
-        r = self.client.recommend_for_group(tastes, domain)
+        r = self.client.recommend_for_group(tastes, domain, city)
         return {"tastes": tastes, "city": city, "domain": domain,
                 "results": r["results"]}
 

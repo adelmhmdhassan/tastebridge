@@ -123,26 +123,28 @@ class QlooClient:
         return {"taste": taste, "domain": domain, "city": city, "mode": self.mode,
                 "seed": seed.get("name"), "results": (in_city or cards)[:6]}
 
-    def recommend_for_group(self, tastes, domain):
+    def recommend_for_group(self, tastes, domain, city=""):
         if self.mode == "mock":
             return {"tastes": tastes, "domain": domain, "mode": self.mode,
                     "results": MOCK_EQUIVALENTS.get(domain, [])[:3]}
         type_ = DOMAIN_TYPES.get(domain, "place")
         ids = []
         for t in tastes:
-            s = _seed_for(t, type_)
+            s = _seed_for(t, type_, city)
             if s:
                 ids.append(s["entity_id"])
         if not ids:
-            return {"tastes": tastes, "domain": domain, "mode": self.mode, "results": []}
+            return {"tastes": tastes, "domain": domain, "city": city, "mode": self.mode, "results": []}
         try:
             ranked = _qloo_json(["qloo", "insights", "--type", type_,
                                  "--signal-entities", ",".join(ids[:3]), "--json"])
         except Exception:
             ranked = _qloo_json(["qloo", "insights", "--type", type_,
                                  "--signal-entities", ids[0], "--json"])
-        return {"tastes": tastes, "domain": domain, "mode": self.mode,
-                "results": [_to_card(e) for e in ranked[:3]]}
+        cards = [_to_card(e, city) for e in ranked]
+        in_city = [c for c in cards if c.get("_city_match")]
+        return {"tastes": tastes, "domain": domain, "city": city, "mode": self.mode,
+                "results": (in_city or cards)[:3]}
 
 
 if __name__ == "__main__":

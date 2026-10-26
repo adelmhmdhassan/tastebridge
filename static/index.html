@@ -204,7 +204,7 @@ function reasonHtml(mode) {
   if (mode === "translate") { last.data.domains.forEach(function(d) { total += d.results.length; }); }
   else { total = last.data.results.length; }
   return '<div class="reason"><h4>&#129504; ' + S[lang].reason_title + '</h4><ol>' + rows + '</ol>'
-       + '<div class="hint">' + total + " " + S[lang].reason_results + " &bull; " + S[lang].demo + "</div></div>";
+       + '<div class="hint">' + total + " " + S[lang].reason_results + " &bull; " + (lastMode === "harness" ? S[lang].live : S[lang].demo) + "</div></div>";
 }
 function renderResults() {
   if (!last) return;

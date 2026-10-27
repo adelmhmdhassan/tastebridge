@@ -67,10 +67,10 @@ input:focus { border-color: #6b3fa0; outline: none; }
 <input id="city" placeholder="مثال: دبي" onkeydown="if(event.key==='Enter')doTranslate()">
 <div class="hint" data-i18n="h_city"></div>
 <div class="domain-row" id="domains">
-<label><input type="checkbox" value="dining" checked><span data-i18n="d_dining">مطاعم</span></label>
-<label><input type="checkbox" value="music" checked><span data-i18n="d_music">موسيقى</span></label>
-<label><input type="checkbox" value="film" checked><span data-i18n="d_film">سينما</span></label>
-<label><input type="checkbox" value="fashion" checked><span data-i18n="d_fashion">موضة</span></label>
+<label><input type="checkbox" value="dining"><span data-i18n="d_dining">مطاعم</span></label>
+<label><input type="checkbox" value="music"><span data-i18n="d_music">موسيقى</span></label>
+<label><input type="checkbox" value="film"><span data-i18n="d_film">سينما</span></label>
+<label><input type="checkbox" value="fashion"><span data-i18n="d_fashion">موضة</span></label>
 </div>
 <button class="go" id="btn-translate" onclick="doTranslate()" data-i18n="go">اكتشف نظيرك</button>
 </div>
@@ -93,7 +93,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 const S = {
   en: { title: "TasteBridge — Thaqafati",
         sub: "An agent that translates your home taste to your new city — powered by Qloo",
-        demo: "Demo data", live: "Live Qloo data", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
+        demo: "Demo data", live: "Live Qloo data", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
         ph_taste: "e.g. koshari", ph_city: "e.g. Dubai",
         h_taste: "Type anything you love back home — search works in English (e.g. koshari, Fairuz)",
         h_city: "The city you live in now",
@@ -106,7 +106,7 @@ const S = {
         empty: "No results yet — try an example.", langBtn: "ع" },
   ar: { title: "ثقافتي — TasteBridge",
         sub: "وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo",
-        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
+        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
         ph_taste: "مثال: koshari", ph_city: "مثال: دبي",
         h_taste: "اكتب أي حاجة بتحبها في بلدك — بالإنجليزي للبحث (مثال: koshari أو Fairuz)",
         h_city: "المدينة اللي عايش فيها دلوقتي",
@@ -119,9 +119,9 @@ const S = {
         empty: "لا نتائج — جرّب مثالاً.", langBtn: "EN" }
 };
 const PRESETS = [
-  { t: "كشري", q: "koshari", c: "Dubai" },
-  { t: "مقاهي جدي القديمة", q: "egyptian cafe", c: "London" },
-  { t: "أغاني فيروز", q: "Fairuz", c: "Doha" }
+  { ar: "كشري", en: "Koshary", q: "koshari", c: "Dubai" },
+  { ar: "مقاهي جدي القديمة", en: "Grandfather's cafes", q: "egyptian cafe", c: "London" },
+  { ar: "أغاني فيروز", en: "Fairuz songs", q: "Fairuz", c: "Doha" }
 ];
 let lang = "ar";
 let lastMode = null;
@@ -141,6 +141,7 @@ function applyLang() {
   });
   renderChips();
   renderResults();
+  renderPresets();
 }
 function toggleLang() { lang = lang === "ar" ? "en" : "ar"; applyLang(); }
 function showMode(n) {
@@ -151,12 +152,14 @@ function showMode(n) {
 }
 function renderPresets() {
   document.getElementById("presets").innerHTML = PRESETS.map(function(p, i) {
-    return '<button class="preset" onclick="applyPreset(' + i + ')">' + p.t + " &larr; " + p.c + '</button>';
+    const label = lang === "ar" ? p.ar : p.en;
+    return '<button class="preset" onclick="applyPreset(' + i + ')">' + label + " &larr; " + p.c + '</button>';
   }).join("");
 }
 function applyPreset(i) {
   document.getElementById("taste").value = PRESETS[i].q;
   document.getElementById("city").value = PRESETS[i].c;
+  document.querySelectorAll("#domains input").forEach(function(x) { x.checked = true; });
   showMode(0);
   doTranslate();
 }
@@ -234,6 +237,10 @@ function showError() {
 }
 async function doTranslate() {
   const domains = [...document.querySelectorAll("#domains input:checked")].map(function(x) { return x.value; });
+  if (!domains.length) {
+    document.getElementById("results").innerHTML = "<div class=reason><div class=hint>" + S[lang].pick + "</div></div>";
+    return;
+  }
   const data = await post("/api/translate", { taste: document.getElementById("taste").value,
     city: document.getElementById("city").value, domains: domains });
   if (data.__error) { showError(); return; }

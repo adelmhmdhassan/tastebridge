@@ -31,6 +31,18 @@ AR_CITIES = {
 }
 
 
+FOODISH = ("restaurant", "cafe", "café", "eatery", "food", "dining",
+           "grill", "kitchen", "bakery", "shawarma", "pizza", "bistro")
+
+
+def _is_foodish(h):
+    p = h.get("properties", {}) or {}
+    pg = p.get("primary_genre") or {}
+    blob = " ".join([pg.get("id") or "", pg.get("name") or "",
+                     p.get("description") or "", p.get("short_description") or ""]).lower()
+    return any(k in blob for k in FOODISH)
+
+
 def _norm_city(city):
     c = (city or "").strip()
     return AR_CITIES.get(c, c).lower()
@@ -92,6 +104,10 @@ def _seed_for(taste, type_, city=""):
         if city_en:
             in_city = [h for h in typed if city_en in _hay(h)]
             if in_city:
+                if type_ == "place":
+                    foodish = [h for h in in_city if _is_foodish(h)]
+                    if foodish:
+                        return foodish[0]
                 return in_city[0]
         if typed:
             return typed[0]

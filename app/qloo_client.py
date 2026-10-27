@@ -32,7 +32,7 @@ AR_CITIES = {
 
 
 FOODISH = ("restaurant", "cafe", "café", "eatery", "food", "dining",
-           "grill", "kitchen", "bakery", "shawarma", "pizza", "bistro")
+           "grill", "kitchen", "bakery", "shawarma", "pizza", "bistro", "koshar")
 
 
 def _is_foodish(h):
@@ -96,22 +96,32 @@ def _to_card(e, city=""):
 def _seed_for(taste, type_, city=""):
     city_en = _norm_city(city)
     queries = ([taste + " " + city_en, taste] if city_en else [taste])
+    last_hits = []
     for q in queries:
         hits = _qloo_json(["qloo", "api", "search", "--query", q, "--json"])[:8]
+        last_hits = hits
         typed = [h for h in hits if any(type_ in (t or "") for t in h.get("types", []))]
-        if not typed and hits:
-            typed = hits[:1]
         if city_en:
             in_city = [h for h in typed if city_en in _hay(h)]
-            if in_city:
-                if type_ == "place":
-                    foodish = [h for h in in_city if _is_foodish(h)]
-                    if foodish:
-                        return foodish[0]
+            if type_ == "place":
+                foodish = [h for h in in_city if _is_foodish(h)]
+                if foodish:
+                    return foodish[0]
+            elif in_city:
                 return in_city[0]
-        if typed:
+        elif typed:
             return typed[0]
-    return None
+    typed = [h for h in last_hits if any(type_ in (t or "") for t in h.get("types", []))]
+    if city_en and type_ == "place":
+        in_city = [h for h in typed if city_en in _hay(h)]
+        foodish = [h for h in in_city if _is_foodish(h)]
+        if foodish:
+            return foodish[0]
+        if in_city:
+            return in_city[0]
+    if typed:
+        return typed[0]
+    return last_hits[0] if last_hits else None
 
 
 class QlooClient:

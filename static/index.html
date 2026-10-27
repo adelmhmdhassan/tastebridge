@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TasteBridge - ثقافتي</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: "Segoe UI", Tahoma, sans-serif; background: #faf7f2; color: #2b2b2b; min-height: 100vh; }
@@ -41,6 +42,10 @@ input:focus { border-color: #6b3fa0; outline: none; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, #6b3fa0, #c05a2e); }
 .domain-title { margin: 16px 0 4px; color: #c05a2e; font-size: 1.05rem; text-transform: capitalize; }
 .empty { color: #999; font-size: 0.9rem; padding: 6px 0; }
+.addr { font-size: 0.78rem; color: #777; margin: 2px 0 0; }
+.card.hl { background: #f3ecfa; border-right-color: #d8c7ee; }
+#map { height: 380px; border-radius: 12px; margin: 12px 0; z-index: 1; }
+#panel-map .hint { margin: 4px 0 12px; }
 .demo-badge.live { background: rgba(46,160,67,0.25); border-color: rgba(46,160,67,0.7); }
 .reason { background: #f6f1fa; border: 1.5px dashed #6b3fa0; border-radius: 10px; padding: 12px 14px; margin: 12px 0; font-size: 0.9rem; color: #444; }
 .reason h4 { color: #6b3fa0; margin-bottom: 6px; font-size: 0.95rem; }
@@ -58,6 +63,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 <nav>
 <button id="tab-translate" class="active" onclick="showMode(0)" data-i18n="tabSolo">وحدك</button>
 <button id="tab-group" onclick="showMode(1)" data-i18n="tabGroup">مع مجموعتك</button>
+<button id="tab-map" onclick="showMode(2)" data-i18n="tabMap">الخريطة</button>
 </nav>
 <main>
 <div class="panel" id="panel-translate">
@@ -87,13 +93,21 @@ input:focus { border-color: #6b3fa0; outline: none; }
 </select>
 <button class="go" id="btn-negotiate" onclick="doNegotiate()" data-i18n="go_g">اتفقوا على خطة</button>
 </div>
+<div class="panel" id="panel-map" style="display:none">
+<input id="mtaste" placeholder="e.g. koshari" onkeydown="if(event.key==='Enter')doHeatmap()">
+<input id="mcity" placeholder="e.g. Dubai" onkeydown="if(event.key==='Enter')doHeatmap()">
+<button class="go" id="btn-map" onclick="doHeatmap()" data-i18n="map_go">Show my taste map</button>
+<div class="hint" data-i18n="map_hint"></div>
+<div id="map"></div>
+</div>
 <div id="results"></div>
 </main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const S = {
   en: { title: "TasteBridge — Thaqafati",
         sub: "An agent that translates your home taste to your new city — powered by Qloo",
-        demo: "Demo data", live: "Live Qloo data", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
+        demo: "Demo data", live: "Live Qloo data", tabMap: "Map", map_go: "Show my taste map", map_hint: "Click any circle to bring its places to the top of the list", ph_mtaste: "e.g. koshari", ph_mcity: "e.g. Dubai", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
         ph_taste: "e.g. koshari", ph_city: "e.g. Dubai",
         h_taste: "Type anything you love back home — search works in English (e.g. koshari, Fairuz)",
         h_city: "The city you live in now",
@@ -106,7 +120,7 @@ const S = {
         empty: "No results yet — try an example.", langBtn: "ع" },
   ar: { title: "ثقافتي — TasteBridge",
         sub: "وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo",
-        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
+        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", tabMap: "الخريطة", map_go: "اظهر خريطة ذوقي", map_hint: "اضغط على أي دائرة لترتيب أماكنها في القائمة", ph_mtaste: "مثال: koshari", ph_mcity: "مثال: Dubai", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
         ph_taste: "مثال: koshari", ph_city: "مثال: دبي",
         h_taste: "اكتب أي حاجة بتحبها في بلدك — بالإنجليزي للبحث (مثال: koshari أو Fairuz)",
         h_city: "المدينة اللي عايش فيها دلوقتي",
@@ -123,7 +137,7 @@ const PRESETS = [
   { ar: "مقاهي جدي القديمة", en: "Grandfather's cafes", q: "egyptian cafe", c: "London" },
   { ar: "أغاني فيروز", en: "Fairuz songs", q: "Fairuz", c: "Doha" }
 ];
-let lang = "ar";
+let lang = "en";
 let lastMode = null;
 let groupTastes = [];
 let last = null;
@@ -135,7 +149,7 @@ function applyLang() {
     const k = el.getAttribute("data-i18n");
     if (S[lang][k] !== undefined) el.textContent = S[lang][k];
   });
-  ["taste", "city", "gcity", "tasteInput"].forEach(function(id) {
+  ["taste", "city", "gcity", "tasteInput", "mtaste", "mcity"].forEach(function(id) {
     const el = document.getElementById(id);
     if (el && S[lang]["ph_" + id] !== undefined) el.placeholder = S[lang]["ph_" + id];
   });
@@ -147,8 +161,11 @@ function toggleLang() { lang = lang === "ar" ? "en" : "ar"; applyLang(); }
 function showMode(n) {
   document.getElementById("panel-translate").style.display = n === 0 ? "block" : "none";
   document.getElementById("panel-group").style.display = n === 1 ? "block" : "none";
+  document.getElementById("panel-map").style.display = n === 2 ? "block" : "none";
   document.getElementById("tab-translate").className = n === 0 ? "active" : "";
   document.getElementById("tab-group").className = n === 1 ? "active" : "";
+  document.getElementById("tab-map").className = n === 2 ? "active" : "";
+  if (n === 2 && mapObj) { setTimeout(function() { mapObj.invalidateSize(); }, 100); }
 }
 function renderPresets() {
   document.getElementById("presets").innerHTML = PRESETS.map(function(p, i) {
@@ -186,7 +203,8 @@ function chipKey(e) {
 function card(item) {
   const pct = Math.round((item.affinity || 0) * 100);
   const why = (lang === "ar" && item.why_ar) ? item.why_ar : (item.why || "");
-  return '<div class="card"><h3>' + item.name + ' <span class="score">' + pct + '% ' + S[lang].score + '</span></h3><p>' + why + '</p>'
+  const addr = item.address ? '<div class="addr">' + item.address + '</div>' : '';
+  return '<div class="card"><h3>' + item.name + ' <span class="score">' + pct + '% ' + S[lang].score + '</span></h3>' + addr + '<p>' + why + '</p>'
     + '<div class="bar"><i style="width:' + pct + '%"></i></div></div>';
 }
 function reasonHtml(mode) {
@@ -211,6 +229,7 @@ function reasonHtml(mode) {
 }
 function renderResults() {
   if (!last) return;
+  if (document.getElementById("panel-map").style.display === "block") return;
   let html = reasonHtml(last.mode);
   if (last.mode === "translate") {
     for (const d of last.data.domains) {
@@ -255,6 +274,88 @@ async function doNegotiate() {
   lastMode = data.mode || null;
   last = { mode: "negotiate", data: data, req: { tastes: groupTastes, city: document.getElementById("gcity").value, domain: document.getElementById("gdomain").value } };
   renderResults();
+}
+let mapObj = null;
+let mapLayer = null;
+async function doHeatmap() {
+  const data = await post("/api/heatmap", { taste: document.getElementById("mtaste").value,
+    city: document.getElementById("mcity").value });
+  if (data.__error) { showError(); return; }
+  lastMode = data.mode || null;
+  updateBadge();
+  const pts = data.points || [];
+  const cardsArr0 = data.cards || [];
+  const ranked = pts.slice().sort(function(a2, b2) { return b2.affinity - a2.affinity; })
+                        .slice(0, Math.max(cardsArr0.length, 3));
+  if (!pts.length) {
+    document.getElementById("results").innerHTML = "<div class=reason><div class=hint>" + S[lang].empty + "</div></div>";
+    return;
+  }
+  if (!mapObj) {
+    mapObj = L.map("map").setView([pts[0].lat, pts[0].lon], 11);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap" }).addTo(mapObj);
+  }
+  const top = ranked[0] || pts[0];
+  mapObj.setView([top.lat, top.lon], 11);
+  if (mapLayer) { mapLayer.clearLayers(); } else { mapLayer = L.layerGroup().addTo(mapObj); }
+  const cardsArr = data.cards || [];
+  const cards = cardsArr.map(function(item, i) {
+    return '<div class="card" id="card-' + i + '" data-lat="' + (item.lat || "") + '" data-lon="' + (item.lon || "") + '">' +
+      card(item) + "</div>";
+  }).join("");
+  document.getElementById("results").innerHTML =
+    "<div class=domain-title>" + S[lang].d_dining + " &bull; " + (data.seed || "") + "</div>" + cards;
+  // rank-based 1:1 linking: heat points and cards both sorted by affinity
+  const markers = [];
+  ranked.forEach(function(p) {
+    const mk = L.circleMarker([p.lat, p.lon], {
+      radius: 8 + p.affinity * 16,
+      fillColor: p.affinity >= 0.9 ? "#6b3fa0" : "#c05a2e",
+      fillOpacity: 0.65, color: "#fff", weight: 1
+    }).addTo(mapLayer).bindTooltip(Math.round(p.affinity * 100) + "% " + (S[lang].score || ""), { direction: "top" });
+    markers.push(mk);
+  });
+  const box = document.getElementById("results");
+  let currentHl = [];
+  function clearHl() {
+    currentHl.forEach(function(ci) { const e2 = document.getElementById("card-" + ci); if (e2) e2.classList.remove("hl"); });
+    currentHl = [];
+  }
+  function paintCircles(active) {
+    markers.forEach(function(mk, k) {
+      mk.setStyle({ fillColor: k === active ? "#d8c7ee" : (ranked[k].affinity >= 0.9 ? "#6b3fa0" : "#c05a2e"),
+                    fillOpacity: k === active ? 0.9 : 0.65 });
+      if (k === active) mk.bringToFront();
+    });
+  }
+  function reorderCards(active) {
+    clearHl();
+    const first = [], rest = [];
+    cardsArr.forEach(function(_, ci) {
+      if (active != null && ci === active) first.push(ci); else rest.push(ci);
+    });
+    first.concat(rest).forEach(function(ci) { box.appendChild(document.getElementById("card-" + ci)); });
+    if (active != null && active < cardsArr.length) {
+      const e2 = document.getElementById("card-" + active);
+      if (e2) { e2.classList.add("hl"); currentHl = [active]; }
+    }
+  }
+  let selectedCircle = null;
+  markers.forEach(function(mk, j) {
+    mk.on("click", function() {
+      selectedCircle = (selectedCircle === j) ? null : j;
+      paintCircles(selectedCircle);
+      reorderCards(selectedCircle);
+    });
+  });
+  cardsArr.forEach(function(item, ci) {
+    const el = document.getElementById("card-" + ci);
+    if (!el) return;
+    el.addEventListener("click", function() {
+      if (ci < markers.length) paintCircles(ci);
+    });
+  });
+
 }
 renderPresets();
 function updateBadge() {

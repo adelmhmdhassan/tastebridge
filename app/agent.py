@@ -22,6 +22,9 @@ class TasteBridgeAgent:
         return {"tastes": tastes, "city": city, "domain": domain,
                 "mode": self.client.mode, "results": r["results"]}
 
+    def heatmap(self, taste, city):
+        return self.client.heatmap_taste(taste, city)
+
     @staticmethod
     def explain(item):
         return item.get("why", "")

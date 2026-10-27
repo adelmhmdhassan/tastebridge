@@ -1,4 +1,4 @@
-﻿"""main.py - TasteBridge FastAPI server."""
+"""main.py - TasteBridge FastAPI server."""
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -24,6 +24,11 @@ class NegotiateRequest(BaseModel):
     domain: str = "dining"
 
 
+class HeatmapRequest(BaseModel):
+    taste: str
+    city: str
+
+
 @app.get("/")
 def home():
     index = STATIC / "index.html"
@@ -40,3 +45,8 @@ def translate(req: TranslateRequest):
 @app.post("/api/negotiate")
 def negotiate(req: NegotiateRequest):
     return agent.negotiate(req.tastes, req.city, req.domain)
+
+
+@app.post("/api/heatmap")
+def heatmap(req: HeatmapRequest):
+    return agent.heatmap(req.taste, req.city)

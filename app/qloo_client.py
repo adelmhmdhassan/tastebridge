@@ -84,6 +84,9 @@ def _to_card(e, city=""):
     hay = _hay(e)
     return {
         "name": e.get("name", ""),
+        "address": p.get("address", ""),
+        "lat": (e.get("location") or {}).get("lat"),
+        "lon": (e.get("location") or {}).get("lon"),
         "why": p.get("description") or p.get("short_description") or "",
         "affinity": round(q.get("affinity") or e.get("popularity") or 0, 4),
         "rating": p.get("business_rating"),
@@ -122,6 +125,28 @@ def _seed_for(taste, type_, city=""):
     if typed:
         return typed[0]
     return last_hits[0] if last_hits else None
+
+
+MOCK_HEATMAP = [
+    {"lat": 25.2048, "lon": 55.2708, "affinity": 0.95},
+    {"lat": 25.1857, "lon": 55.2522, "affinity": 0.88},
+    {"lat": 25.0805, "lon": 55.1403, "affinity": 0.76},
+    {"lat": 25.0657, "lon": 55.1711, "affinity": 0.64},
+]
+
+
+def _exec_json(op, payload):
+    cmd = ["qloo", "exec", op, "--input", json.dumps(payload)]
+    full = (["cmd", "/c"] + cmd) if os.name == "nt" else cmd
+    out = subprocess.run(full, capture_output=True, text=True, timeout=90, encoding="utf-8")
+    if out.returncode != 0:
+        raise RuntimeError(f"qloo exec failed: {out.stderr.strip()[:300]}")
+    data = json.loads(out.stdout)
+    if isinstance(data, dict) and data.get("status") == "needs_input":
+        return {"needs_input": True, "summary": data.get("summary", "")}
+    if isinstance(data, dict) and data.get("error"):
+        raise RuntimeError(str(data["error"])[:200])
+    return data
 
 
 class QlooClient:
@@ -171,6 +196,29 @@ class QlooClient:
         in_city = [c for c in cards if c.get("_city_match")]
         return {"tastes": tastes, "domain": domain, "city": city, "mode": self.mode,
                 "results": (in_city or cards)[:3]}
+
+
+    def heatmap(self, entity_id, within, limit=12):
+        if self.mode == "mock":
+            return {"mode": self.mode, "points": MOCK_HEATMAP[:limit]}
+        data = _exec_json("where_popular", {"entity": entity_id, "within": within, "limit": limit})
+        if data.get("needs_input"):
+            return {"mode": self.mode, "points": [], "needs_input": True}
+        pts = [{"lat": p["location"]["latitude"], "lon": p["location"]["longitude"],
+                "affinity": round((p.get("query") or {}).get("affinity") or 0, 4)}
+               for p in data.get("results", []) if p.get("location")]
+        return {"mode": self.mode, "points": pts}
+
+    def heatmap_taste(self, taste, within):
+        if self.mode == "mock":
+            return {"taste": taste, "city": within, "mode": self.mode,
+                    "points": MOCK_HEATMAP, "cards": MOCK_EQUIVALENTS.get("dining", [])}
+        seed = _seed_for(taste, "place", within)
+        if not seed:
+            return {"taste": taste, "city": within, "mode": self.mode, "points": [], "cards": []}
+        r = self.heatmap(seed["entity_id"], within)
+        cards = self.find_equivalents(taste, "dining", within)["results"]
+        return {"taste": taste, "city": within, "seed": seed.get("name"), "cards": cards, **r}
 
 
 if __name__ == "__main__":

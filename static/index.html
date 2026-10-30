@@ -50,7 +50,10 @@ input:focus { border-color: #6b3fa0; outline: none; }
 .cimg { width: 100%; height: 130px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
 .cgal { position: relative; margin-bottom: 8px; }
 .cgal .cimg { margin-bottom: 0; display: block; }
-.galbtn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 0.8rem; line-height: 1; z-index: 3; }
+.galbtn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.45); border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; z-index: 3; font-size: 0; padding: 0; }
+.galbtn::after { content: ""; display: block; width: 7px; height: 7px; margin: 0 auto; border-style: solid; border-color: #fff; border-width: 0 2px 2px 0; }
+.gl::after { transform: rotate(135deg); margin-top: -1px; }
+.gr::after { transform: rotate(-45deg); margin-top: -1px; }
 .cgal img { position: relative; z-index: 1; }
 .galbtn:hover { background: rgba(0,0,0,0.7); box-shadow: 0 0 10px rgba(107,63,160,0.9); }
 .locatebtn { display: inline-block; margin-top: 6px; font-size: 0.78rem; color: #fff; background: linear-gradient(135deg, #6b3fa0, #c05a2e); border: none; border-radius: 12px; padding: 3px 14px; cursor: pointer; font-family: inherit; }
@@ -136,7 +139,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 </div>
 <div id="results"></div>
 </main>
-<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d48</b> &middot; 2026-10-30</footer>
+<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d51</b> &middot; 2026-10-30</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const S = {
@@ -249,12 +252,11 @@ function card(item) {
   const addr = item.address ? '<div class="addr">' + item.address + '</div>' : '';
   let img = "";
   if (item.images && item.images.length > 1) {
-    const gi = GAL_REGISTRY.length;
-    GAL_REGISTRY.push(item.images);
-    img = '<div class="cgal" data-gi="' + gi + '" data-i="0">'
-      + '<button class="galbtn gl" onclick="cycleImg(this,-1)">&#10094;</button>'
+    const j = encodeURIComponent(JSON.stringify(item.images));
+    img = '<div class="cgal" data-imgs="' + j + '" data-i="0">'
+      + '<button class="galbtn gl" type="button" onclick="cycleImg(this,-1)"></button>'
       + '<img class="cimg" src="' + item.images[0] + '" loading="lazy" onerror="this.style.display=\'none\'">'
-      + '<button class="galbtn gr" onclick="cycleImg(this,1)">&#10095;</button>'
+      + '<button class="galbtn gr" type="button" onclick="cycleImg(this,1)"></button>'
       + '<span class="galcount">1/' + item.images.length + "</span></div>";
   } else if (item.image) {
     img = '<img class="cimg" src="' + item.image + '" loading="lazy" onerror="this.style.display=\'none\'">';
@@ -293,7 +295,7 @@ function extraHtml(mode) {
           }).join("") + "</div></div>"
         + '<div class="hint">' + S[lang].wo_note + "</div></div>";
     }
-    html += "<button class=clearbtn id=btnplan onclick=showPlan(this)>" + S[lang].plan_btn + "</button>";
+    html += "<button class=clearbtn id=btnplan onclick=showPlan(this)>" + S[lang].plan_btn + '</button><div id="planbox"></div>';
   }
   if (mode === "translate" && last.data.next && last.data.next.length) {
     html += "<div class=domain-title>" + S[lang].next_t + "</div>" + last.data.next.map(card).join("");
@@ -395,10 +397,10 @@ function clearAll(mode) {
 let reqSeq = 0;
 let GAL_REGISTRY = [];
 function cycleImg(btn, dir) {
-  if (document.documentElement.dir === "rtl") dir = -dir;
   const wrap = btn.parentNode;
   if (!wrap || !wrap.getAttribute) return;
-  const imgs = GAL_REGISTRY[parseInt(wrap.getAttribute("data-gi"))];
+  let imgs = [];
+  try { imgs = JSON.parse(decodeURIComponent(wrap.getAttribute("data-imgs"))); } catch (e) { return; }
   if (!imgs || !imgs.length) return;
   if (dir === 0) { const pre = new Image(); pre.src = imgs[1] || imgs[0]; return; }
   let i = parseInt(wrap.getAttribute("data-i")) + dir;
@@ -421,12 +423,9 @@ function planHtml(data) {
 function restorePlan() {
   try {
     if (!window.PLAN_DATA || !last || last.mode !== "translate") return;
-    const btn = document.getElementById("btnplan");
-    if (!btn || !btn.parentNode) return;
-    const pb = document.createElement("div");
-    pb.id = "planbox";
+    const pb = document.getElementById("planbox");
+    if (!pb) return;
     pb.innerHTML = "<div class=domain-title>" + S[lang].plan_title + "</div>" + planHtml(window.PLAN_DATA);
-    btn.parentNode.insertBefore(pb, btn.nextSibling);
   } catch (e) { console.error("plan:", e); }
 }
 async function showPlan(btn) {
@@ -438,13 +437,8 @@ async function showPlan(btn) {
   if (data.__error) { showError(); if (btn) btn.innerHTML = orig; return; }
   if (mySeq !== reqSeq) { if (btn) btn.innerHTML = orig; return; }
   window.PLAN_DATA = data;
-  let pbox = document.getElementById("planbox");
-  if (pbox) pbox.remove();
-  pbox = document.createElement("div");
-  pbox.id = "planbox";
-  if (btn && btn.parentNode) btn.parentNode.insertBefore(pbox, btn.nextSibling);
-  else document.getElementById("results").appendChild(pbox);
-  pbox.innerHTML = "<div class=domain-title>" + S[lang].plan_title + "</div>" + planHtml(data);
+  const pbox = document.getElementById("planbox");
+  if (pbox) pbox.innerHTML = "<div class=domain-title>" + S[lang].plan_title + "</div>" + planHtml(data);
   if (btn) btn.innerHTML = orig;
 }
 

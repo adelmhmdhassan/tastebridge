@@ -125,7 +125,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 </div>
 <div id="results"></div>
 </main>
-<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d35</b> &middot; 2026-10-30</footer>
+<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d36</b> &middot; 2026-10-30</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const S = {
@@ -471,10 +471,12 @@ async function doHeatmap() {
     if (!mk || !mapObj) return;
     mapSel = ci;
     paintCircles(ci);
+    mapObj.invalidateSize();
     const ll = mk.getLatLng();
     mapObj.setView(ll, 15, { animate: true });
-    setTimeout(function() { mk.openTooltip(); mapObj.invalidateSize(); }, 350);
+    setTimeout(function() { mk.openTooltip(); }, 400);
   }
+  window.locatePlace = locatePlace;
   function paintCircles(active) {
     markers.forEach(function(mk, k) {
       mk.setStyle({ fillColor: k === active ? "#d8c7ee" : (ranked[k].affinity >= 0.9 ? "#6b3fa0" : "#c05a2e"),

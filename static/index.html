@@ -229,8 +229,9 @@ function card(item) {
   const addr = item.address ? '<div class="addr">' + item.address + '</div>' : '';
   let img = "";
   if (item.images && item.images.length > 1) {
-    const j = JSON.stringify(item.images).replace(/'/g, "&#39;");
-    img = '<div class="cgal" data-imgs=\'' + j + '\' data-i="0">'
+    const gi = GAL_REGISTRY.length;
+    GAL_REGISTRY.push(item.images);
+    img = '<div class="cgal" data-gi="' + gi + '" data-i="0">'
       + '<button class="galbtn gl" onclick="cycleImg(this,-1)">&#10094;</button>'
       + '<img class="cimg" src="' + item.images[0] + '" loading="lazy" onerror="this.style.display=\'none\'">'
       + '<button class="galbtn gr" onclick="cycleImg(this,1)">&#10095;</button>'
@@ -238,9 +239,10 @@ function card(item) {
   } else if (item.image) {
     img = '<img class="cimg" src="' + item.image + '" loading="lazy" onerror="this.style.display=\'none\'">';
   }
-  const maps = (item.lat && item.lon)
-    ? ' <a class="gmaps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + item.lat + '%2C' + item.lon + '">' + S[lang].gmaps + ' &nearr;</a>'
-    : '';
+  const mapsHref = (item.lat && item.lon)
+    ? "https://www.google.com/maps/search/?api=1&query=" + item.lat + "%2C" + item.lon
+    : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(item.name + " " + (item.city || ""));
+  const maps = ' <a class="gmaps" target="_blank" rel="noopener" href="' + mapsHref + '">' + S[lang].gmaps + ' &nearr;</a>';
   return '<div class="card">' + img + '<h3>' + item.name + ' <span class="score">' + pct + '% ' + S[lang].score + '</span></h3>' + addr + '<p>' + why + '</p>'
     + '<div class="bar"><i style="width:' + pct + '%"></i></div>' + maps + '</div>';
 }
@@ -303,6 +305,7 @@ function reasonHtml(mode) {
        + '<div class="hint">' + total + " " + S[lang].reason_results + " &bull; " + (lastMode === "harness" ? S[lang].live : S[lang].demo) + "</div>" + t + "</div>";
 }
 function renderResults() {
+  GAL_REGISTRY = [];
   if (!last) return;
   if (document.getElementById("panel-map").style.display === "block") return;
   const parts = [reasonHtml(last.mode)];
@@ -349,12 +352,12 @@ function clearAll(mode) {
   try { history.replaceState(null, "", location.pathname); } catch (e) {}
 }
 let reqSeq = 0;
+let GAL_REGISTRY = [];
 function cycleImg(btn, dir) {
   const wrap = btn.parentNode;
   if (!wrap || !wrap.getAttribute) return;
-  let imgs = [];
-  try { imgs = JSON.parse(wrap.getAttribute("data-imgs")); } catch (e) { return; }
-  if (!imgs.length) return;
+  const imgs = GAL_REGISTRY[parseInt(wrap.getAttribute("data-gi"))];
+  if (!imgs || !imgs.length) return;
   if (dir === 0) { const pre = new Image(); pre.src = imgs[1] || imgs[0]; return; }
   let i = parseInt(wrap.getAttribute("data-i")) + dir;
   if (i < 0) i = imgs.length - 1;
@@ -400,6 +403,7 @@ async function doNegotiate() {
 let mapObj = null;
 let mapLayer = null;
 async function doHeatmap() {
+  GAL_REGISTRY = [];
   const mySeq = ++reqSeq;
   showLoading();
   const data = await post("/api/heatmap", { taste: document.getElementById("mtaste").value,
@@ -429,27 +433,35 @@ async function doHeatmap() {
     return '<div class="card" id="card-' + i + '" data-lat="' + (item.lat || "") + '" data-lon="' + (item.lon || "") + '">' +
       card(item) + "</div>";
   }).join("");
-  let nextHtml = "";
-  if (data.next && data.next.length) {
-    nextHtml = "<div class=domain-title>" + S[lang].next_t + "</div>" + data.next.map(card).join("");
-  }
-  document.getElementById("results").innerHTML =
-    "<div class=domain-title>" + S[lang].d_dining + " &bull; " + (data.seed || "") + "</div>" + cards + nextHtml;
-  // rank-based 1:1 linking: heat points and cards both sorted by affinity
+  // state-driven 1:1 linking: click re-renders the list with order + highlight baked in
   const markers = [];
-  ranked.forEach(function(p) {
-    const mk = L.circleMarker([p.lat, p.lon], {
-      radius: 8 + p.affinity * 16,
-      fillColor: p.affinity >= 0.9 ? "#6b3fa0" : "#c05a2e",
-      fillOpacity: 0.65, color: "#fff", weight: 1
-    }).addTo(mapLayer).bindTooltip(Math.round(p.affinity * 100) + "% " + (S[lang].score || ""), { direction: "top" });
-    markers.push(mk);
-  });
-  const box = document.getElementById("results");
-  let currentHl = [];
-  function clearHl() {
-    currentHl.forEach(function(ci) { const e2 = document.getElementById("card-" + ci); if (e2) e2.classList.remove("hl"); });
-    currentHl = [];
+  let mapSel = null;
+  function renderMapList() {
+    GAL_REGISTRY = [];
+    const first = [], rest = [];
+    cardsArr.forEach(function(item, ci) {
+      if (mapSel != null && ci === mapSel) first.push(ci); else rest.push(ci);
+    });
+    const head = "<div class=domain-title>" + S[lang].d_dining + " &bull; " + (data.seed || "") + "</div>";
+    const cardsHtml = first.concat(rest).map(function(ci) {
+      return '<div class="card' + (mapSel === ci ? " hl" : "") + '" id="card-' + ci + '" data-ci="' + ci + '">' + card(cardsArr[ci]) + "</div>";
+    }).join("");
+    let nextHtml = "";
+    if (data.next && data.next.length) {
+      nextHtml = "<div class=domain-title>" + S[lang].next_t + "</div>" + data.next.map(card).join("");
+    }
+    document.getElementById("results").innerHTML = head + cardsHtml + nextHtml;
+    cardsArr.forEach(function(item, ci) {
+      const el = document.getElementById("card-" + ci);
+      if (!el) return;
+      el.addEventListener("click", function() {
+        if (ci < markers.length) {
+          mapSel = ci;
+          paintCircles(mapSel);
+          renderMapList();
+        }
+      });
+    });
   }
   function paintCircles(active) {
     markers.forEach(function(mk, k) {
@@ -458,35 +470,24 @@ async function doHeatmap() {
       if (k === active) mk.bringToFront();
     });
   }
-  function reorderCards(active) {
-    clearHl();
-    const first = [], rest = [];
-    cardsArr.forEach(function(_, ci) {
-      if (active != null && ci === active) first.push(ci); else rest.push(ci);
-    });
-    first.concat(rest).forEach(function(ci) { box.appendChild(document.getElementById("card-" + ci)); });
-    if (active != null && active < cardsArr.length) {
-      const e2 = document.getElementById("card-" + active);
-      if (e2) { e2.classList.add("hl"); currentHl = [active]; }
-    }
-  }
-  let selectedCircle = null;
+  ranked.forEach(function(p) {
+    const mk = L.circleMarker([p.lat, p.lon], {
+      radius: 8 + p.affinity * 16,
+      fillColor: p.affinity >= 0.9 ? "#6b3fa0" : "#c05a2e",
+      fillOpacity: 0.65, color: "#fff", weight: 1
+    }).addTo(mapLayer).bindTooltip(Math.round(p.affinity * 100) + "% " + (S[lang].score || ""), { direction: "top" });
+    markers.push(mk);
+  });
   markers.forEach(function(mk, j) {
     mk.on("click", function() {
-      selectedCircle = (selectedCircle === j) ? null : j;
-      paintCircles(selectedCircle);
-      reorderCards(selectedCircle);
+      mapSel = (mapSel === j) ? null : j;
+      paintCircles(mapSel);
+      renderMapList();
     });
   });
-  cardsArr.forEach(function(item, ci) {
-    const el = document.getElementById("card-" + ci);
-    if (!el) return;
-    el.addEventListener("click", function() {
-      if (ci < markers.length) paintCircles(ci);
-    });
-  });
-
+  renderMapList();
 }
+
 renderPresets();
 (function checkHash() {
   const g = function(k) { const m2 = location.hash.match(new RegExp(k + "=([^&]+)")); return m2 ? decodeURIComponent(m2[1]) : null; };

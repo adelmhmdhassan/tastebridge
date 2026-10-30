@@ -50,7 +50,9 @@ input:focus { border-color: #6b3fa0; outline: none; }
 .cgal .cimg { margin-bottom: 0; display: block; }
 .galbtn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 0.8rem; line-height: 1; z-index: 3; }
 .cgal img { position: relative; z-index: 1; }
-.galbtn:hover { background: rgba(0,0,0,0.7); }
+.galbtn:hover { background: rgba(0,0,0,0.7); box-shadow: 0 0 10px rgba(107,63,160,0.9); }
+.locatebtn { display: inline-block; margin-top: 6px; font-size: 0.78rem; color: #fff; background: linear-gradient(135deg, #6b3fa0, #c05a2e); border: none; border-radius: 12px; padding: 3px 14px; cursor: pointer; font-family: inherit; }
+.locatebtn:hover { filter: brightness(1.1); }
 .gl { left: 6px; } .gr { right: 6px; }
 .galcount { position: absolute; bottom: 6px; right: 8px; background: rgba(0,0,0,0.5); color: #fff; font-size: 0.65rem; border-radius: 8px; padding: 0 6px; }
 .gmaps { display: inline-block; font-size: 0.75rem; color: #6b3fa0; margin-top: 6px; }
@@ -123,13 +125,13 @@ input:focus { border-color: #6b3fa0; outline: none; }
 </div>
 <div id="results"></div>
 </main>
-<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d33</b> &middot; 2026-10-30</footer>
+<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d35</b> &middot; 2026-10-30</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const S = {
   en: { title: "TasteBridge — Thaqafati",
         sub: "An agent that translates your home taste to your new city — powered by Qloo",
-        demo: "Demo data", live: "Live Qloo data", loading: "\u23f3 Contacting Qloo...", clear: "\u2715 Clear", dna: "Taste DNA", who: "Who loves it", dd_dining: "Food & restaurants", dd_music: "Music & gigs", dd_film: "Film & shows", dd_fashion: "Brands & style", next_t: "What's next? Stops to complete the night", fit: "Fit with the group", gmaps: "Open in Google Maps", tabMap: "Map", map_go: "Show my taste map", map_hint: "The % on circles = how strongly that area matches your taste — click a circle to bring its places to the top", ph_mtaste: "e.g. koshari", ph_mcity: "e.g. Dubai", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
+        demo: "Demo data", live: "Live Qloo data", loading: "\u23f3 Contacting Qloo...", locate: "📍 Show on map", clear: "\u2715 Clear", dna: "Taste DNA", who: "Who loves it", dd_dining: "Food & restaurants", dd_music: "Music & gigs", dd_film: "Film & shows", dd_fashion: "Brands & style", next_t: "What's next? Stops to complete the night", fit: "Fit with the group", gmaps: "Open in Google Maps", tabMap: "Map", map_go: "Show my taste map", map_hint: "The % on circles = how strongly that area matches your taste — click a circle to bring its places to the top", ph_mtaste: "e.g. koshari", ph_mcity: "e.g. Dubai", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
         ph_taste: "e.g. koshari", ph_city: "e.g. Dubai",
         h_taste: "Type anything you love back home — search works in English (e.g. koshari, Fairuz)",
         h_city: "The city you live in now",
@@ -142,7 +144,7 @@ const S = {
         empty: "No results yet — try an example.", langBtn: "ع" },
   ar: { title: "ثقافتي — TasteBridge",
         sub: "وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo",
-        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", loading: "\u23f3 \u062c\u0627\u0631\u064d \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628ـ Qloo...", clear: "\u2715 \u0645\u0633\u062d", dna: "DNA الذوق", who: "مين بيحبه", dd_dining: "أكل ومطاعم", dd_music: "أغاني وحفلات", dd_film: "أفلام وعروض", dd_fashion: "براندات وستايل", next_t: "و بعد الأكل؟ محطات تكمل الليلة", fit: "التوافق مع المجموعة", gmaps: "افتح في خرائط جوجل", tabMap: "الخريطة", map_go: "اظهر خريطة ذوقي", map_hint: "النسبة على الدوائر = قوة تقارب المنطقة مع ذوقك — اضغط على أي دائرة لترتيب أماكنها في القائمة", ph_mtaste: "مثال: koshari", ph_mcity: "مثال: Dubai", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
+        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", loading: "\u23f3 \u062c\u0627\u0631\u064d \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628ـ Qloo...", locate: "📍 \u0627\u0639\u0631\u0636 \u0639\u0644\u0649 \u0627\u0644\u062E\u0631\u064A\u0637\u0629", clear: "\u2715 \u0645\u0633\u062d", dna: "DNA الذوق", who: "مين بيحبه", dd_dining: "أكل ومطاعم", dd_music: "أغاني وحفلات", dd_film: "أفلام وعروض", dd_fashion: "براندات وستايل", next_t: "و بعد الأكل؟ محطات تكمل الليلة", fit: "التوافق مع المجموعة", gmaps: "افتح في خرائط جوجل", tabMap: "الخريطة", map_go: "اظهر خريطة ذوقي", map_hint: "النسبة على الدوائر = قوة تقارب المنطقة مع ذوقك — اضغط على أي دائرة لترتيب أماكنها في القائمة", ph_mtaste: "مثال: koshari", ph_mcity: "مثال: Dubai", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
         ph_taste: "مثال: koshari", ph_city: "مثال: دبي",
         h_taste: "اكتب أي حاجة بتحبها في بلدك — بالإنجليزي للبحث (مثال: koshari أو Fairuz)",
         h_city: "المدينة اللي عايش فيها دلوقتي",
@@ -445,7 +447,11 @@ async function doHeatmap() {
     });
     const head = "<div class=domain-title>" + S[lang].d_dining + " &bull; " + (data.seed || "") + "</div>";
     const cardsHtml = first.concat(rest).map(function(ci) {
-      return '<div class="card' + (mapSel === ci ? " hl" : "") + '" id="card-' + ci + '" data-ci="' + ci + '">' + card(cardsArr[ci]) + "</div>";
+      const it = cardsArr[ci];
+      const loc = (it.lat && it.lon && ci < markers.length)
+        ? ' <button class="locatebtn" onclick="locatePlace(' + ci + ')">' + S[lang].locate + "</button>"
+        : "";
+      return '<div class="card' + (mapSel === ci ? " hl" : "") + '" id="card-' + ci + '" data-ci="' + ci + '">' + card(it) + loc + "</div>";
     }).join("");
     let nextHtml = "";
     if (data.next && data.next.length) {
@@ -460,6 +466,15 @@ async function doHeatmap() {
       });
     });
   }
+  function locatePlace(ci) {
+    const mk = markers[ci];
+    if (!mk || !mapObj) return;
+    mapSel = ci;
+    paintCircles(ci);
+    const ll = mk.getLatLng();
+    mapObj.setView(ll, 15, { animate: true });
+    setTimeout(function() { mk.openTooltip(); mapObj.invalidateSize(); }, 350);
+  }
   function paintCircles(active) {
     markers.forEach(function(mk, k) {
       mk.setStyle({ fillColor: k === active ? "#d8c7ee" : (ranked[k].affinity >= 0.9 ? "#6b3fa0" : "#c05a2e"),
@@ -471,8 +486,12 @@ async function doHeatmap() {
     const mk = L.circleMarker([p.lat, p.lon], {
       radius: 8 + p.affinity * 16,
       fillColor: p.affinity >= 0.9 ? "#6b3fa0" : "#c05a2e",
-      fillOpacity: 0.65, color: "#fff", weight: 1
-    }).addTo(mapLayer).bindTooltip(Math.round(p.affinity * 100) + "% " + (S[lang].score || ""), { direction: "top" });
+      fillOpacity: 0.65, color: "#fff", weight: 1, aff: p.affinity
+    }).addTo(mapLayer).bindTooltip(function(layer) {
+      const ci2 = markers.length;
+      const nm = (cardsArr[ci2] && cardsArr[ci2].name) || "";
+      return (nm ? nm + " \u00b7 " : "") + Math.round(layer.options.aff * 100) + "% " + (S[lang].score || "");
+    }, { direction: "top" });
     markers.push(mk);
   });
   markers.forEach(function(mk, j) {

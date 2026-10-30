@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TasteBridge - ثقافتي</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌉</text></svg>">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,6 +29,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 .domain-row label small { display: block; color: #999; font-size: 0.66rem; cursor: pointer; }
 .domain-row input { display: none; }
 .domain-row input:checked + span { color: #6b3fa0; font-weight: 700; }
+.domain-row label:has(input:checked) { border-color: #6b3fa0; background: #f3ecfa; box-shadow: 0 1px 4px rgba(107,63,160,0.25); }
 .presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
 .preset { border: 1.5px dashed #6b3fa0; color: #6b3fa0; background: transparent; border-radius: 18px; padding: 6px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit; }
 .chipbox { border: 1.5px solid #ddd; border-radius: 10px; padding: 6px 10px; margin: 6px 0 4px; }
@@ -53,6 +55,15 @@ input:focus { border-color: #6b3fa0; outline: none; }
 .galbtn:hover { background: rgba(0,0,0,0.7); box-shadow: 0 0 10px rgba(107,63,160,0.9); }
 .locatebtn { display: inline-block; margin-top: 6px; font-size: 0.78rem; color: #fff; background: linear-gradient(135deg, #6b3fa0, #c05a2e); border: none; border-radius: 12px; padding: 3px 14px; cursor: pointer; font-family: inherit; }
 .locatebtn:hover { filter: brightness(1.1); }
+.wogrid { display: flex; gap: 10px; margin: 8px 0; }
+.wocol { flex: 1; border: 1.5px dashed #ddd; border-radius: 10px; padding: 10px 12px; font-size: 0.85rem; }
+.wocol.generic { color: #999; }
+.wocol.qloo { border-color: #6b3fa0; }
+.wocol h5 { margin-bottom: 6px; font-size: 0.8rem; }
+.planstep { display: flex; gap: 12px; align-items: flex-start; margin: 12px 0; }
+.planstep .num { background: linear-gradient(135deg, #6b3fa0, #c05a2e); color: #fff; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+.planstep .tm { font-size: 0.72rem; color: #999; margin-top: 2px; }
+.planstep .body { flex: 1; }
 .gl { left: 6px; } .gr { right: 6px; }
 .galcount { position: absolute; bottom: 6px; right: 8px; background: rgba(0,0,0,0.5); color: #fff; font-size: 0.65rem; border-radius: 8px; padding: 0 6px; }
 .gmaps { display: inline-block; font-size: 0.75rem; color: #6b3fa0; margin-top: 6px; }
@@ -93,7 +104,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 <input id="city" placeholder="مثال: دبي" onkeydown="if(event.key==='Enter')doTranslate()">
 <div class="hint" data-i18n="h_city"></div>
 <div class="domain-row" id="domains">
-<label><input type="checkbox" value="dining"><span data-i18n="d_dining">مطاعم</span><small data-i18n="dd_dining"></small></label>
+<label><input type="checkbox" value="dining" checked><span data-i18n="d_dining">مطاعم</span><small data-i18n="dd_dining"></small></label>
 <label><input type="checkbox" value="music"><span data-i18n="d_music">موسيقى</span><small data-i18n="dd_music"></small></label>
 <label><input type="checkbox" value="film"><span data-i18n="d_film">سينما</span><small data-i18n="dd_film"></small></label>
 <label><input type="checkbox" value="fashion"><span data-i18n="d_fashion">موضة</span><small data-i18n="dd_fashion"></small></label>
@@ -125,13 +136,16 @@ input:focus { border-color: #6b3fa0; outline: none; }
 </div>
 <div id="results"></div>
 </main>
-<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d36</b> &middot; 2026-10-30</footer>
+<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d48</b> &middot; 2026-10-30</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const S = {
   en: { title: "TasteBridge — Thaqafati",
         sub: "An agent that translates your home taste to your new city — powered by Qloo",
-        demo: "Demo data", live: "Live Qloo data", loading: "\u23f3 Contacting Qloo...", locate: "📍 Show on map", clear: "\u2715 Clear", dna: "Taste DNA", who: "Who loves it", dd_dining: "Food & restaurants", dd_music: "Music & gigs", dd_film: "Film & shows", dd_fashion: "Brands & style", next_t: "What's next? Stops to complete the night", fit: "Fit with the group", gmaps: "Open in Google Maps", tabMap: "Map", map_go: "Show my taste map", map_hint: "The % on circles = how strongly that area matches your taste — click a circle to bring its places to the top", ph_mtaste: "e.g. koshari", ph_mcity: "e.g. Dubai", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
+        demo: "Demo data", live: "Live Qloo data", loading: "\u23f3 Contacting Qloo...", wo_btn: "⚖️ See the difference without Qloo", wo_title: "Why Qloo matters", wo_generic: "Generic LLM answer (simulated)",
+    wo_qloo: "TasteBridge answer (real Qloo)", wo_note: "Generic answer is simulated for comparison — no data",
+    plan_btn: "🌙 Plan my first evening", plan_title: "Your first evening: a complete night", plan_times: "7:00 PM,9:00 PM,10:30 PM",
+    locate: "📍 Show on map", clear: "\u2715 Clear", dna: "Taste DNA", who: "Who loves it", dd_dining: "Food & restaurants", dd_music: "Music & gigs", dd_film: "Film & shows", dd_fashion: "Brands & style", next_t: "What's next? Stops to complete the night", fit: "Fit with the group", gmaps: "Open in Google Maps", tabMap: "Map", map_go: "Show my taste map", map_hint: "The % on circles = how strongly that area matches your taste — click a circle to bring its places to the top", ph_mtaste: "e.g. koshari", ph_mcity: "e.g. Dubai", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
         ph_taste: "e.g. koshari", ph_city: "e.g. Dubai",
         h_taste: "Type anything you love back home — search works in English (e.g. koshari, Fairuz)",
         h_city: "The city you live in now",
@@ -144,7 +158,10 @@ const S = {
         empty: "No results yet — try an example.", langBtn: "ع" },
   ar: { title: "ثقافتي — TasteBridge",
         sub: "وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo",
-        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", loading: "\u23f3 \u062c\u0627\u0631\u064d \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628ـ Qloo...", locate: "📍 \u0627\u0639\u0631\u0636 \u0639\u0644\u0649 \u0627\u0644\u062E\u0631\u064A\u0637\u0629", clear: "\u2715 \u0645\u0633\u062d", dna: "DNA الذوق", who: "مين بيحبه", dd_dining: "أكل ومطاعم", dd_music: "أغاني وحفلات", dd_film: "أفلام وعروض", dd_fashion: "براندات وستايل", next_t: "و بعد الأكل؟ محطات تكمل الليلة", fit: "التوافق مع المجموعة", gmaps: "افتح في خرائط جوجل", tabMap: "الخريطة", map_go: "اظهر خريطة ذوقي", map_hint: "النسبة على الدوائر = قوة تقارب المنطقة مع ذوقك — اضغط على أي دائرة لترتيب أماكنها في القائمة", ph_mtaste: "مثال: koshari", ph_mcity: "مثال: Dubai", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
+        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", loading: "\u23f3 \u062c\u0627\u0631\u064d \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628ـ Qloo...", wo_btn: "⚖️ شوف الفرق بدون Qloo", wo_title: "ليه Qloo ضروري؟", wo_generic: "إجابة LLM عادي (محاكاة)",
+    wo_qloo: "إجابة TasteBridge (Qloo حقيقي)", wo_note: "الإجابة العامة محاكاة لأغراض المقارنة — مفيش بيانات",
+    plan_btn: "🌙 خطط ليومك الأول", plan_title: "يومك الأول: مساء متكامل", plan_times: "7:00 مساءً,9:00 مساءً,10:30 مساءً",
+    locate: "📍 \u0627\u0639\u0631\u0636 \u0639\u0644\u0649 \u0627\u0644\u062E\u0631\u064A\u0637\u0629", clear: "\u2715 \u0645\u0633\u062d", dna: "DNA الذوق", who: "مين بيحبه", dd_dining: "أكل ومطاعم", dd_music: "أغاني وحفلات", dd_film: "أفلام وعروض", dd_fashion: "براندات وستايل", next_t: "و بعد الأكل؟ محطات تكمل الليلة", fit: "التوافق مع المجموعة", gmaps: "افتح في خرائط جوجل", tabMap: "الخريطة", map_go: "اظهر خريطة ذوقي", map_hint: "النسبة على الدوائر = قوة تقارب المنطقة مع ذوقك — اضغط على أي دائرة لترتيب أماكنها في القائمة", ph_mtaste: "مثال: koshari", ph_mcity: "مثال: Dubai", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
         ph_taste: "مثال: koshari", ph_city: "مثال: دبي",
         h_taste: "اكتب أي حاجة بتحبها في بلدك — بالإنجليزي للبحث (مثال: koshari أو Fairuz)",
         h_city: "المدينة اللي عايش فيها دلوقتي",
@@ -262,6 +279,22 @@ function extraHtml(mode) {
       html += "<div class=hint>" + S[lang].who + ": " + ex.who.ages.join(" · ") + " — " + ex.who.gender + "</div>";
     }
   }
+  if (mode === "translate") {
+    const din = (last.data.domains || []).filter(function(d) { return d.domain === "dining"; })[0];
+    const top3 = din ? din.results.slice(0, 3) : [];
+    if (top3.length) {
+      const cityName = (last.req && last.req.city) || "";
+      const genericTxt = "\u201C" + cityName + " has amazing food! Try the big mall or the marina \u2014 everything there is great 😊\u201D";
+      html += "<button class=clearbtn onclick=\"document.getElementById('wobox').style.display='block';this.style.display='none'\">" + S[lang].wo_btn + "</button>";
+      html += '<div id="wobox" style="display:none"><div class=domain-title>' + S[lang].wo_title + '</div>'
+        + '<div class=wogrid><div class="wocol generic"><h5>' + S[lang].wo_generic + "</h5><div>" + genericTxt + "</div></div>"
+        + '<div class="wocol qloo"><h5>' + S[lang].wo_qloo + "</h5>" + top3.map(function(c2) {
+            return "<div>&#8226; " + c2.name + " \u00b7 " + Math.round((c2.affinity || 0) * 100) + "%</div>";
+          }).join("") + "</div></div>"
+        + '<div class="hint">' + S[lang].wo_note + "</div></div>";
+    }
+    html += "<button class=clearbtn id=btnplan onclick=showPlan(this)>" + S[lang].plan_btn + "</button>";
+  }
   if (mode === "translate" && last.data.next && last.data.next.length) {
     html += "<div class=domain-title>" + S[lang].next_t + "</div>" + last.data.next.map(card).join("");
   }
@@ -308,6 +341,9 @@ function reasonHtml(mode) {
        + '<div class="hint">' + total + " " + S[lang].reason_results + " &bull; " + (lastMode === "harness" ? S[lang].live : S[lang].demo) + "</div>" + t + "</div>";
 }
 function renderResults() {
+  try { renderResultsInner(); } catch (e) { console.error("render:", e); }
+}
+function renderResultsInner() {
   GAL_REGISTRY = [];
   if (!last) return;
   if (document.getElementById("panel-map").style.display === "block") return;
@@ -323,6 +359,7 @@ function renderResults() {
   parts.push(extraHtml(last.mode));
   document.getElementById("results").innerHTML = parts.join("");
   document.querySelectorAll(".cgal").forEach(function(g) { g.querySelector(".gr"); cycleImg(g.querySelector(".gr") || g, 0); });
+  restorePlan();
 }
 async function post(url, body) {
   try {
@@ -338,6 +375,7 @@ function showError() {
   document.getElementById("results").innerHTML = "<div class=reason><h4>&#9888;</h4><div class=hint>" + S[lang].err + "</div></div>";
 }
 function clearAll(mode) {
+  window.PLAN_DATA = null;
   if (mode === 0) {
     document.getElementById("taste").value = "";
     document.getElementById("city").value = "";
@@ -357,6 +395,7 @@ function clearAll(mode) {
 let reqSeq = 0;
 let GAL_REGISTRY = [];
 function cycleImg(btn, dir) {
+  if (document.documentElement.dir === "rtl") dir = -dir;
   const wrap = btn.parentNode;
   if (!wrap || !wrap.getAttribute) return;
   const imgs = GAL_REGISTRY[parseInt(wrap.getAttribute("data-gi"))];
@@ -371,10 +410,49 @@ function cycleImg(btn, dir) {
   const cnt = wrap.querySelector(".galcount");
   if (cnt) cnt.textContent = (i + 1) + "/" + imgs.length;
 }
+window.PLAN_DATA = null;
+function planHtml(data) {
+  const times = S[lang].plan_times.split(",");
+  return (data.plan || []).map(function(p, i) {
+    return '<div class="planstep"><div class="num">' + (i + 1) + '</div><div><div class="tm">' +
+      (times[i] || "") + '</div></div><div class="body">' + card(p) + "</div></div>";
+  }).join("");
+}
+function restorePlan() {
+  try {
+    if (!window.PLAN_DATA || !last || last.mode !== "translate") return;
+    const btn = document.getElementById("btnplan");
+    if (!btn || !btn.parentNode) return;
+    const pb = document.createElement("div");
+    pb.id = "planbox";
+    pb.innerHTML = "<div class=domain-title>" + S[lang].plan_title + "</div>" + planHtml(window.PLAN_DATA);
+    btn.parentNode.insertBefore(pb, btn.nextSibling);
+  } catch (e) { console.error("plan:", e); }
+}
+async function showPlan(btn) {
+  const mySeq = ++reqSeq;
+  const orig = btn ? btn.innerHTML : "";
+  if (btn) btn.innerHTML = S[lang].loading;
+  const data = await post("/api/plan", { taste: document.getElementById("taste").value,
+    city: document.getElementById("city").value });
+  if (data.__error) { showError(); if (btn) btn.innerHTML = orig; return; }
+  if (mySeq !== reqSeq) { if (btn) btn.innerHTML = orig; return; }
+  window.PLAN_DATA = data;
+  let pbox = document.getElementById("planbox");
+  if (pbox) pbox.remove();
+  pbox = document.createElement("div");
+  pbox.id = "planbox";
+  if (btn && btn.parentNode) btn.parentNode.insertBefore(pbox, btn.nextSibling);
+  else document.getElementById("results").appendChild(pbox);
+  pbox.innerHTML = "<div class=domain-title>" + S[lang].plan_title + "</div>" + planHtml(data);
+  if (btn) btn.innerHTML = orig;
+}
+
 function showLoading() {
   document.getElementById("results").innerHTML = '<div class="reason"><div class="hint">' + S[lang].loading + "</div></div>";
 }
 async function doTranslate() {
+  window.PLAN_DATA = null;
   const mySeq = ++reqSeq;
   showLoading();
   const domains = [...document.querySelectorAll("#domains input:checked")].map(function(x) { return x.value; });
@@ -392,6 +470,7 @@ async function doTranslate() {
   renderResults();
 }
 async function doNegotiate() {
+  window.PLAN_DATA = null;
   const mySeq = ++reqSeq;
   showLoading();
   const data = await post("/api/negotiate", { tastes: groupTastes, city: document.getElementById("gcity").value,
@@ -406,6 +485,7 @@ async function doNegotiate() {
 let mapObj = null;
 let mapLayer = null;
 async function doHeatmap() {
+  window.PLAN_DATA = null;
   GAL_REGISTRY = [];
   const mySeq = ++reqSeq;
   showLoading();

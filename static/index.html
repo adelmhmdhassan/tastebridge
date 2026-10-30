@@ -25,6 +25,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 .hint { font-size: 0.8rem; color: #888; margin: -6px 0 10px; }
 .domain-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .domain-row label { border: 1.5px solid #ddd; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
+.domain-row label small { display: block; color: #999; font-size: 0.66rem; cursor: pointer; }
 .domain-row input { display: none; }
 .domain-row input:checked + span { color: #6b3fa0; font-weight: 700; }
 .presets { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
@@ -36,21 +37,38 @@ input:focus { border-color: #6b3fa0; outline: none; }
 .chip b { cursor: pointer; margin-inline-start: 8px; color: #c05a2e; }
 #chipCount { font-size: 0.8rem; color: #888; margin: 2px 0 10px; }
 .card { background: #fff; border-right: 4px solid #c05a2e; border-radius: 10px; padding: 14px 16px; margin: 10px 0; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
-.card h3 { color: #6b3fa0; font-size: 1.05rem; }
+.card h3 { color: #6b3fa0; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.card h3 { flex-wrap: wrap; }
 .card p { font-size: 0.92rem; color: #555; margin-top: 4px; }
 .bar { height: 6px; background: #eee; border-radius: 3px; margin-top: 8px; overflow: hidden; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, #6b3fa0, #c05a2e); }
 .domain-title { margin: 16px 0 4px; color: #c05a2e; font-size: 1.05rem; text-transform: capitalize; }
 .empty { color: #999; font-size: 0.9rem; padding: 6px 0; }
 .addr { font-size: 0.78rem; color: #777; margin: 2px 0 0; }
+.cimg { width: 100%; height: 130px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; }
+.cgal { position: relative; margin-bottom: 8px; }
+.cgal .cimg { margin-bottom: 0; display: block; }
+.galbtn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.45); color: #fff; border: none; border-radius: 50%; width: 26px; height: 26px; cursor: pointer; font-size: 0.8rem; line-height: 1; z-index: 3; }
+.cgal img { position: relative; z-index: 1; }
+.galbtn:hover { background: rgba(0,0,0,0.7); }
+.gl { left: 6px; } .gr { right: 6px; }
+.galcount { position: absolute; bottom: 6px; right: 8px; background: rgba(0,0,0,0.5); color: #fff; font-size: 0.65rem; border-radius: 8px; padding: 0 6px; }
+.gmaps { display: inline-block; font-size: 0.75rem; color: #6b3fa0; margin-top: 6px; }
+.chiprow { margin: 10px 0; }
+.chiprow .chip2 { display: inline-block; background: #f0e8f7; color: #6b3fa0; border-radius: 14px; padding: 3px 12px; margin: 3px; font-size: 0.82rem; }
+.trace { font-family: monospace; font-size: 0.72rem; color: #999; margin-top: 8px; }
+.trace div { padding: 1px 0; }
+:focus-visible { outline: 2px solid #6b3fa0; outline-offset: 2px; }
 .card.hl { background: #f3ecfa; border-right-color: #d8c7ee; }
 #map { height: 380px; border-radius: 12px; margin: 12px 0; z-index: 1; }
 #panel-map .hint { margin: 4px 0 12px; }
+.clearbtn { display: inline-block; background: #fff; border: 1.5px solid #ddd; color: #999; border-radius: 16px; padding: 4px 16px; font-size: 0.78rem; cursor: pointer; margin-top: 10px; font-family: inherit; }
+.clearbtn:hover { border-color: #c05a2e; color: #c05a2e; }
 .demo-badge.live { background: rgba(46,160,67,0.25); border-color: rgba(46,160,67,0.7); }
 .reason { background: #f6f1fa; border: 1.5px dashed #6b3fa0; border-radius: 10px; padding: 12px 14px; margin: 12px 0; font-size: 0.9rem; color: #444; }
 .reason h4 { color: #6b3fa0; margin-bottom: 6px; font-size: 0.95rem; }
 .reason ol { margin: 0 18px 6px 18px; }
-.score { font-size: 0.72rem; background: #eee; border-radius: 8px; padding: 1px 8px; color: #6b3fa0; vertical-align: middle; }
+.score { font-size: 0.72rem; background: #eee; border-radius: 8px; padding: 1px 8px; color: #6b3fa0; white-space: nowrap; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -73,12 +91,13 @@ input:focus { border-color: #6b3fa0; outline: none; }
 <input id="city" placeholder="مثال: دبي" onkeydown="if(event.key==='Enter')doTranslate()">
 <div class="hint" data-i18n="h_city"></div>
 <div class="domain-row" id="domains">
-<label><input type="checkbox" value="dining"><span data-i18n="d_dining">مطاعم</span></label>
-<label><input type="checkbox" value="music"><span data-i18n="d_music">موسيقى</span></label>
-<label><input type="checkbox" value="film"><span data-i18n="d_film">سينما</span></label>
-<label><input type="checkbox" value="fashion"><span data-i18n="d_fashion">موضة</span></label>
+<label><input type="checkbox" value="dining"><span data-i18n="d_dining">مطاعم</span><small data-i18n="dd_dining"></small></label>
+<label><input type="checkbox" value="music"><span data-i18n="d_music">موسيقى</span><small data-i18n="dd_music"></small></label>
+<label><input type="checkbox" value="film"><span data-i18n="d_film">سينما</span><small data-i18n="dd_film"></small></label>
+<label><input type="checkbox" value="fashion"><span data-i18n="d_fashion">موضة</span><small data-i18n="dd_fashion"></small></label>
 </div>
 <button class="go" id="btn-translate" onclick="doTranslate()" data-i18n="go">اكتشف نظيرك</button>
+<button class="clearbtn" onclick="clearAll(0)" data-i18n="clear">&#10005; مسح</button>
 </div>
 <div class="panel" id="panel-group" style="display:none">
 <div class="chipbox"><div id="chips" style="display:inline"></div><input id="tasteInput" placeholder="اكتب ذوقه واضغط Enter" onkeydown="chipKey(event)"></div>
@@ -92,11 +111,13 @@ input:focus { border-color: #6b3fa0; outline: none; }
 <option value="fashion" data-i18n="d_fashion">موضة</option>
 </select>
 <button class="go" id="btn-negotiate" onclick="doNegotiate()" data-i18n="go_g">اتفقوا على خطة</button>
+<button class="clearbtn" onclick="clearAll(1)" data-i18n="clear">&#10005; مسح</button>
 </div>
 <div class="panel" id="panel-map" style="display:none">
 <input id="mtaste" placeholder="e.g. koshari" onkeydown="if(event.key==='Enter')doHeatmap()">
 <input id="mcity" placeholder="e.g. Dubai" onkeydown="if(event.key==='Enter')doHeatmap()">
 <button class="go" id="btn-map" onclick="doHeatmap()" data-i18n="map_go">Show my taste map</button>
+<button class="clearbtn" onclick="clearAll(2)" data-i18n="clear">&#10005; مسح</button>
 <div class="hint" data-i18n="map_hint"></div>
 <div id="map"></div>
 </div>
@@ -107,7 +128,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 const S = {
   en: { title: "TasteBridge — Thaqafati",
         sub: "An agent that translates your home taste to your new city — powered by Qloo",
-        demo: "Demo data", live: "Live Qloo data", tabMap: "Map", map_go: "Show my taste map", map_hint: "Click any circle to bring its places to the top of the list", ph_mtaste: "e.g. koshari", ph_mcity: "e.g. Dubai", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
+        demo: "Demo data", live: "Live Qloo data", loading: "\u23f3 Contacting Qloo...", clear: "\u2715 Clear", dna: "Taste DNA", who: "Who loves it", dd_dining: "Food & restaurants", dd_music: "Music & gigs", dd_film: "Film & shows", dd_fashion: "Brands & style", next_t: "What's next? Stops to complete the night", fit: "Fit with the group", gmaps: "Open in Google Maps", tabMap: "Map", map_go: "Show my taste map", map_hint: "The % on circles = how strongly that area matches your taste — click a circle to bring its places to the top", ph_mtaste: "e.g. koshari", ph_mcity: "e.g. Dubai", pick: "Pick at least one domain first", err: "Connection error — please try again", reason_title: "Agent reasoning", reason_step1: "Understanding the request", reason_step2: "Querying Qloo", reason_step3: "Ranking by affinity", reason_results: "results", reason_domains: "domains", score: "match", tabSolo: "Solo", tabGroup: "Group",
         ph_taste: "e.g. koshari", ph_city: "e.g. Dubai",
         h_taste: "Type anything you love back home — search works in English (e.g. koshari, Fairuz)",
         h_city: "The city you live in now",
@@ -120,7 +141,7 @@ const S = {
         empty: "No results yet — try an example.", langBtn: "ع" },
   ar: { title: "ثقافتي — TasteBridge",
         sub: "وكيل يترجم ذوقك من بلدك إلى مدينتك الجديدة — مدعوم بـ Qloo",
-        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", tabMap: "الخريطة", map_go: "اظهر خريطة ذوقي", map_hint: "اضغط على أي دائرة لترتيب أماكنها في القائمة", ph_mtaste: "مثال: koshari", ph_mcity: "مثال: Dubai", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
+        demo: "بيانات تجريبية", live: "بيانات Qloo الحية", loading: "\u23f3 \u062c\u0627\u0631\u064d \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628ـ Qloo...", clear: "\u2715 \u0645\u0633\u062d", dna: "DNA الذوق", who: "مين بيحبه", dd_dining: "أكل ومطاعم", dd_music: "أغاني وحفلات", dd_film: "أفلام وعروض", dd_fashion: "براندات وستايل", next_t: "و بعد الأكل؟ محطات تكمل الليلة", fit: "التوافق مع المجموعة", gmaps: "افتح في خرائط جوجل", tabMap: "الخريطة", map_go: "اظهر خريطة ذوقي", map_hint: "النسبة على الدوائر = قوة تقارب المنطقة مع ذوقك — اضغط على أي دائرة لترتيب أماكنها في القائمة", ph_mtaste: "مثال: koshari", ph_mcity: "مثال: Dubai", pick: "اختار دومين واحد على الأقل الأول", err: "حصل خطأ أثناء الاتصال — حاول مرة أخرى", reason_title: "تفكير الوكيل", reason_step1: "فهم الطلب", reason_step2: "استعلام Qloo", reason_step3: "ترتيب حسب التقارب", reason_results: "نتيجة", reason_domains: "دومينز", score: "تقارب", tabSolo: "وحدك", tabGroup: "مع مجموعتك",
         ph_taste: "مثال: koshari", ph_city: "مثال: دبي",
         h_taste: "اكتب أي حاجة بتحبها في بلدك — بالإنجليزي للبحث (مثال: koshari أو Fairuz)",
         h_city: "المدينة اللي عايش فيها دلوقتي",
@@ -165,6 +186,9 @@ function showMode(n) {
   document.getElementById("tab-translate").className = n === 0 ? "active" : "";
   document.getElementById("tab-group").className = n === 1 ? "active" : "";
   document.getElementById("tab-map").className = n === 2 ? "active" : "";
+  document.getElementById("results").innerHTML = "";
+  last = null;
+  if (n !== 2 && mapLayer) mapLayer.clearLayers();
   if (n === 2 && mapObj) { setTimeout(function() { mapObj.invalidateSize(); }, 100); }
 }
 function renderPresets() {
@@ -176,7 +200,6 @@ function renderPresets() {
 function applyPreset(i) {
   document.getElementById("taste").value = PRESETS[i].q;
   document.getElementById("city").value = PRESETS[i].c;
-  document.querySelectorAll("#domains input").forEach(function(x) { x.checked = true; });
   showMode(0);
   doTranslate();
 }
@@ -204,8 +227,54 @@ function card(item) {
   const pct = Math.round((item.affinity || 0) * 100);
   const why = (lang === "ar" && item.why_ar) ? item.why_ar : (item.why || "");
   const addr = item.address ? '<div class="addr">' + item.address + '</div>' : '';
-  return '<div class="card"><h3>' + item.name + ' <span class="score">' + pct + '% ' + S[lang].score + '</span></h3>' + addr + '<p>' + why + '</p>'
-    + '<div class="bar"><i style="width:' + pct + '%"></i></div></div>';
+  let img = "";
+  if (item.images && item.images.length > 1) {
+    const j = JSON.stringify(item.images).replace(/'/g, "&#39;");
+    img = '<div class="cgal" data-imgs=\'' + j + '\' data-i="0">'
+      + '<button class="galbtn gl" onclick="cycleImg(this,-1)">&#10094;</button>'
+      + '<img class="cimg" src="' + item.images[0] + '" loading="lazy" onerror="this.style.display=\'none\'">'
+      + '<button class="galbtn gr" onclick="cycleImg(this,1)">&#10095;</button>'
+      + '<span class="galcount">1/' + item.images.length + "</span></div>";
+  } else if (item.image) {
+    img = '<img class="cimg" src="' + item.image + '" loading="lazy" onerror="this.style.display=\'none\'">';
+  }
+  const maps = (item.lat && item.lon)
+    ? ' <a class="gmaps" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=' + item.lat + '%2C' + item.lon + '">' + S[lang].gmaps + ' &nearr;</a>'
+    : '';
+  return '<div class="card">' + img + '<h3>' + item.name + ' <span class="score">' + pct + '% ' + S[lang].score + '</span></h3>' + addr + '<p>' + why + '</p>'
+    + '<div class="bar"><i style="width:' + pct + '%"></i></div>' + maps + '</div>';
+}
+function extraHtml(mode) {
+  if (!last || !last.data) return "";
+  let html = "";
+  if (mode === "translate" && last.data.extras) {
+    const ex = last.data.extras;
+    if (ex.dna && ex.dna.length) {
+      html += "<div class=domain-title>" + S[lang].dna + "</div><div class=chiprow>" +
+        ex.dna.map(function(t) { return '<span class="chip2">' + t.name + "</span>"; }).join("") + "</div>";
+    }
+    if (ex.who && ex.who.ages && ex.who.ages.length) {
+      html += "<div class=hint>" + S[lang].who + ": " + ex.who.ages.join(" · ") + " — " + ex.who.gender + "</div>";
+    }
+  }
+  if (mode === "translate" && last.data.next && last.data.next.length) {
+    html += "<div class=domain-title>" + S[lang].next_t + "</div>" + last.data.next.map(card).join("");
+  }
+  if (mode === "negotiate" && last.data.compare && last.data.compare.length) {
+    html += "<div class=domain-title>" + S[lang].fit + "</div>" + last.data.compare.map(function(c) {
+      const pct2 = c.fit == null ? "—" : Math.round(c.fit * 100) + "%";
+      const w2 = c.fit == null ? 0 : Math.round(c.fit * 100);
+      return '<div class="card"><h3>' + c.taste + ' <span class="score">' + pct2 + '</span></h3>' +
+        '<div class="bar"><i style="width:' + w2 + '%"></i></div></div>';
+    }).join("");
+  }
+  return html;
+}
+function traceHtml() {
+  if (!last || !last.data || !last.data.trace || !last.data.trace.length) return "";
+  return '<div class="trace">' + last.data.trace.map(function(t) {
+    return "<div>&#9889; " + t.op + " &middot; " + t.ms + "ms</div>";
+  }).join("") + "</div>";
 }
 function reasonHtml(mode) {
   let rows = "";
@@ -224,22 +293,30 @@ function reasonHtml(mode) {
   let total = 0;
   if (mode === "translate") { last.data.domains.forEach(function(d) { total += d.results.length; }); }
   else { total = last.data.results.length; }
+  let t = "";
+  if (last.data.trace && last.data.trace.length) {
+    t = '<div class="trace">' + last.data.trace.map(function(x) {
+      return "<div>&#9889; " + x.op + " &middot; " + x.ms + "ms</div>";
+    }).join("") + "</div>";
+  }
   return '<div class="reason"><h4>&#129504; ' + S[lang].reason_title + '</h4><ol>' + rows + '</ol>'
-       + '<div class="hint">' + total + " " + S[lang].reason_results + " &bull; " + (lastMode === "harness" ? S[lang].live : S[lang].demo) + "</div></div>";
+       + '<div class="hint">' + total + " " + S[lang].reason_results + " &bull; " + (lastMode === "harness" ? S[lang].live : S[lang].demo) + "</div>" + t + "</div>";
 }
 function renderResults() {
   if (!last) return;
   if (document.getElementById("panel-map").style.display === "block") return;
-  let html = reasonHtml(last.mode);
+  const parts = [reasonHtml(last.mode)];
   if (last.mode === "translate") {
     for (const d of last.data.domains) {
-      html += "<div class=domain-title>" + (S[lang]["d_" + d.domain] || d.domain) + "</div>";
-      html += d.results.length ? d.results.map(card).join("") : "<div class=empty>" + S[lang].empty + "</div>";
+      parts.push("<div class=domain-title>" + (S[lang]["d_" + d.domain] || d.domain) + "</div>");
+      parts.push(d.results.length ? d.results.map(card).join("") : "<div class=empty>" + S[lang].empty + "</div>");
     }
-  } else {
-    html = last.data.results.map(card).join("") || "<div class=empty>" + S[lang].empty + "</div>";
+  } else if (last.data.results) {
+    parts.push(last.data.results.map(card).join("") || "<div class=empty>" + S[lang].empty + "</div>");
   }
-  document.getElementById("results").innerHTML = html;
+  parts.push(extraHtml(last.mode));
+  document.getElementById("results").innerHTML = parts.join("");
+  document.querySelectorAll(".cgal").forEach(function(g) { g.querySelector(".gr"); cycleImg(g.querySelector(".gr") || g, 0); });
 }
 async function post(url, body) {
   try {
@@ -254,7 +331,46 @@ function showError() {
   last = null;
   document.getElementById("results").innerHTML = "<div class=reason><h4>&#9888;</h4><div class=hint>" + S[lang].err + "</div></div>";
 }
+function clearAll(mode) {
+  if (mode === 0) {
+    document.getElementById("taste").value = "";
+    document.getElementById("city").value = "";
+  } else if (mode === 1) {
+    groupTastes = [];
+    renderChips();
+    document.getElementById("gcity").value = "";
+  } else {
+    document.getElementById("mtaste").value = "";
+    document.getElementById("mcity").value = "";
+    if (mapLayer) mapLayer.clearLayers();
+  }
+  document.getElementById("results").innerHTML = "";
+  last = null;
+  try { history.replaceState(null, "", location.pathname); } catch (e) {}
+}
+let reqSeq = 0;
+function cycleImg(btn, dir) {
+  const wrap = btn.parentNode;
+  if (!wrap || !wrap.getAttribute) return;
+  let imgs = [];
+  try { imgs = JSON.parse(wrap.getAttribute("data-imgs")); } catch (e) { return; }
+  if (!imgs.length) return;
+  if (dir === 0) { const pre = new Image(); pre.src = imgs[1] || imgs[0]; return; }
+  let i = parseInt(wrap.getAttribute("data-i")) + dir;
+  if (i < 0) i = imgs.length - 1;
+  if (i >= imgs.length) i = 0;
+  wrap.setAttribute("data-i", i);
+  const im = wrap.querySelector("img");
+  if (im) im.src = imgs[i];
+  const cnt = wrap.querySelector(".galcount");
+  if (cnt) cnt.textContent = (i + 1) + "/" + imgs.length;
+}
+function showLoading() {
+  document.getElementById("results").innerHTML = '<div class="reason"><div class="hint">' + S[lang].loading + "</div></div>";
+}
 async function doTranslate() {
+  const mySeq = ++reqSeq;
+  showLoading();
   const domains = [...document.querySelectorAll("#domains input:checked")].map(function(x) { return x.value; });
   if (!domains.length) {
     document.getElementById("results").innerHTML = "<div class=reason><div class=hint>" + S[lang].pick + "</div></div>";
@@ -263,25 +379,35 @@ async function doTranslate() {
   const data = await post("/api/translate", { taste: document.getElementById("taste").value,
     city: document.getElementById("city").value, domains: domains });
   if (data.__error) { showError(); return; }
+  if (mySeq !== reqSeq) return;
   lastMode = data.mode || null;
+  try { history.replaceState(null, "", "#m=solo&taste=" + encodeURIComponent(document.getElementById("taste").value) + "&city=" + encodeURIComponent(document.getElementById("city").value)); } catch (e) {}
   last = { mode: "translate", data: data, req: { taste: document.getElementById("taste").value, city: document.getElementById("city").value, domains: domains } };
   renderResults();
 }
 async function doNegotiate() {
+  const mySeq = ++reqSeq;
+  showLoading();
   const data = await post("/api/negotiate", { tastes: groupTastes, city: document.getElementById("gcity").value,
     domain: document.getElementById("gdomain").value });
   if (data.__error) { showError(); return; }
+  if (mySeq !== reqSeq) return;
   lastMode = data.mode || null;
+  try { history.replaceState(null, "", "#m=group&tastes=" + encodeURIComponent(groupTastes.join(",")) + "&city=" + encodeURIComponent(document.getElementById("gcity").value) + "&domain=" + document.getElementById("gdomain").value); } catch (e) {}
   last = { mode: "negotiate", data: data, req: { tastes: groupTastes, city: document.getElementById("gcity").value, domain: document.getElementById("gdomain").value } };
   renderResults();
 }
 let mapObj = null;
 let mapLayer = null;
 async function doHeatmap() {
+  const mySeq = ++reqSeq;
+  showLoading();
   const data = await post("/api/heatmap", { taste: document.getElementById("mtaste").value,
     city: document.getElementById("mcity").value });
   if (data.__error) { showError(); return; }
+  if (mySeq !== reqSeq) return;
   lastMode = data.mode || null;
+  try { history.replaceState(null, "", "#m=map&taste=" + encodeURIComponent(document.getElementById("mtaste").value) + "&city=" + encodeURIComponent(document.getElementById("mcity").value)); } catch (e) {}
   updateBadge();
   const pts = data.points || [];
   const cardsArr0 = data.cards || [];
@@ -303,8 +429,12 @@ async function doHeatmap() {
     return '<div class="card" id="card-' + i + '" data-lat="' + (item.lat || "") + '" data-lon="' + (item.lon || "") + '">' +
       card(item) + "</div>";
   }).join("");
+  let nextHtml = "";
+  if (data.next && data.next.length) {
+    nextHtml = "<div class=domain-title>" + S[lang].next_t + "</div>" + data.next.map(card).join("");
+  }
   document.getElementById("results").innerHTML =
-    "<div class=domain-title>" + S[lang].d_dining + " &bull; " + (data.seed || "") + "</div>" + cards;
+    "<div class=domain-title>" + S[lang].d_dining + " &bull; " + (data.seed || "") + "</div>" + cards + nextHtml;
   // rank-based 1:1 linking: heat points and cards both sorted by affinity
   const markers = [];
   ranked.forEach(function(p) {
@@ -358,6 +488,27 @@ async function doHeatmap() {
 
 }
 renderPresets();
+(function checkHash() {
+  const g = function(k) { const m2 = location.hash.match(new RegExp(k + "=([^&]+)")); return m2 ? decodeURIComponent(m2[1]) : null; };
+  const mode = g("m");
+  if (mode === "group") {
+    const ts = (g("tastes") || "").split(",").filter(Boolean);
+    showMode(1);
+    ts.forEach(function(t2) { addChip(t2); });
+    if (g("city")) document.getElementById("gcity").value = g("city");
+    if (g("domain")) document.getElementById("gdomain").value = g("domain");
+    setTimeout(doNegotiate, 300);
+  } else if (mode === "map") {
+    showMode(2);
+    if (g("taste")) document.getElementById("mtaste").value = g("taste");
+    if (g("city")) document.getElementById("mcity").value = g("city");
+    setTimeout(doHeatmap, 300);
+  } else if (g("taste")) {
+    document.getElementById("taste").value = g("taste");
+    document.getElementById("city").value = g("city") || "";
+    setTimeout(doTranslate, 300);
+  }
+})();
 function updateBadge() {
   const b = document.getElementById("modeBadge");
   if (!b) return;

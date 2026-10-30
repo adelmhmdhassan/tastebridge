@@ -1,7 +1,26 @@
 """qloo_client.py - Qloo adapter: mock now, real harness when the key arrives."""
 import json
 import os
+import re as _re
 import subprocess
+import time
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
+TRACE = []
+TRACE_LOCK = threading.Lock()
+
+
+def _trace(op, ms):
+    with TRACE_LOCK:
+        TRACE.append({"op": op, "ms": int(ms)})
+
+
+def drain_trace():
+    with TRACE_LOCK:
+        out = list(TRACE)
+        TRACE.clear()
+        return out
 
 BASE_URL = "https://hackathon.api.qloo.com"  # ONLY this base works with hackathon keys
 
@@ -63,8 +82,10 @@ DOMAIN_TYPES = {"dining": "place", "music": "artist", "film": "movie", "fashion"
 
 def _qloo_json(cmd):
     # Windows: qloo is an npm .cmd shim (not .exe) -> subprocess needs cmd /c
+    t0 = time.time()
     full = (["cmd", "/c"] + cmd) if os.name == "nt" else cmd
     out = subprocess.run(full, capture_output=True, text=True, timeout=90, encoding="utf-8")
+    _trace(cmd[1] if cmd[0] == "qloo" else " ".join(cmd[2:4]), (time.time() - t0) * 1000)
     if out.returncode != 0:
         raise RuntimeError(f"qloo failed: {out.stderr.strip()[:300]}")
     data = json.loads(out.stdout)
@@ -77,13 +98,22 @@ def _to_card(e, city=""):
     p = e.get("properties", {}) or {}
     geo = p.get("geocode", {}) or {}
     q = e.get("query", {}) or {}
-    img = (p.get("image") or {}).get("url")
-    if not img and p.get("images"):
-        img = p["images"][0].get("url")
+    raw = ([(p.get("image") or {}).get("url")] + [im.get("url") for im in (p.get("images") or [])])
+    imgs = []
+    seen = set()
+    for u in raw:
+        if not u:
+            continue
+        key = _re.sub(r"-\d+x-[a-zA-Z]+", "", u)
+        if key not in seen:
+            seen.add(key)
+            imgs.append(u)
+    img = imgs[0] if imgs else None
     city_name = geo.get("city") or ""
     hay = _hay(e)
     return {
         "name": e.get("name", ""),
+        "id": e.get("entity_id", ""),
         "address": p.get("address", ""),
         "lat": (e.get("location") or {}).get("lat"),
         "lon": (e.get("location") or {}).get("lon"),
@@ -91,6 +121,7 @@ def _to_card(e, city=""):
         "affinity": round(q.get("affinity") or e.get("popularity") or 0, 4),
         "rating": p.get("business_rating"),
         "image": img,
+        "images": imgs,
         "city": city_name,
         "_city_match": (city.lower() in hay) if city else True,
     }
@@ -136,9 +167,11 @@ MOCK_HEATMAP = [
 
 
 def _exec_json(op, payload):
+    t0 = time.time()
     cmd = ["qloo", "exec", op, "--input", json.dumps(payload)]
     full = (["cmd", "/c"] + cmd) if os.name == "nt" else cmd
     out = subprocess.run(full, capture_output=True, text=True, timeout=90, encoding="utf-8")
+    _trace("exec " + op, (time.time() - t0) * 1000)
     if out.returncode != 0:
         raise RuntimeError(f"qloo exec failed: {out.stderr.strip()[:300]}")
     data = json.loads(out.stdout)
@@ -147,6 +180,22 @@ def _exec_json(op, payload):
     if isinstance(data, dict) and data.get("error"):
         raise RuntimeError(str(data["error"])[:200])
     return data
+
+
+def _first_number(obj):
+    if isinstance(obj, (int, float)):
+        return round(float(obj), 3)
+    if isinstance(obj, dict):
+        for v in obj.values():
+            r = _first_number(v)
+            if r is not None:
+                return r
+    if isinstance(obj, list):
+        for v in obj:
+            r = _first_number(v)
+            if r is not None:
+                return r
+    return None
 
 
 class QlooClient:
@@ -198,6 +247,89 @@ class QlooClient:
                 "results": (in_city or cards)[:3]}
 
 
+    def next_stops(self, entity_id, city, limit=3):
+        """recommend: what comes next after the winning pick."""
+        if self.mode == "mock":
+            return {"stops": MOCK_EQUIVALENTS.get("dining", [])[:2]}
+        d = _exec_json("recommend", {"target_type": "place", "signals": [entity_id],
+                                     "signal_location": city, "explain": True, "limit": limit})
+        rs = d.get("results") or []
+        return {"stops": [_to_card(e, city) for e in rs]}
+
+    def extras(self, taste, city):
+        """entity_tags + audience_demographics for the seed entity."""
+        if self.mode == "mock":
+            return {"dna": [{"name": "Middle Eastern", "affinity": 0.99}, {"name": "Late Night", "affinity": 0.9}],
+                    "who": {"ages": ["25-29", "30-34"], "gender": "mixed"}}
+        try:
+            seed = _seed_for(taste, "place", city)
+        except Exception:
+            seed = None
+        if not seed:
+            return {"dna": [], "who": None}
+        sid = seed["entity_id"]
+
+        def get_tags():
+            d = _exec_json("entity_tags", {"entities": [sid], "limit": 10})
+            rs = d.get("results") or []
+            keep = [t for t in rs if any(k in (t.get("type") or "") for k in ("genre", "cuisine", "dish", "ambience", "atmosphere"))]
+            pool = keep or rs
+            return [{"name": t.get("name"), "affinity": round(t.get("affinity") or 0, 3)} for t in pool[:10]]
+
+        def get_demo():
+            d = _exec_json("audience_demographics", {"entity": sid})
+            rs = (d.get("results") or [{}])[0]
+            q = rs.get("query") or {}
+            ages = sorted((q.get("age") or {}).items(), key=lambda kv: kv[1], reverse=True)
+            top_ages = [k.replace("_", "-").replace("and", "+") for k, v in ages if v > 0][:2]
+            g = q.get("gender") or {}
+            gender = "mixed"
+            if (g.get("male") or 0) > 0.05 and (g.get("female") or 0) < -0.05:
+                gender = "male-leaning"
+            elif (g.get("female") or 0) > 0.05 and (g.get("male") or 0) < -0.05:
+                gender = "female-leaning"
+            return {"ages": top_ages, "gender": gender}
+
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            f_tags = ex.submit(get_tags)
+            f_demo = ex.submit(get_demo)
+            try:
+                dna = f_tags.result()
+            except Exception:
+                dna = []
+            try:
+                who = f_demo.result()
+            except Exception:
+                who = None
+        return {"dna": dna, "who": who}
+
+    def compare_tastes(self, tastes, city):
+        """compare_audiences: each taste against the rest of the group."""
+        if self.mode == "mock":
+            return [{"taste": t, "fit": round(0.9 - i * 0.05, 2)} for i, t in enumerate(tastes)]
+        seeds = []
+        for t in tastes:
+            try:
+                s = _seed_for(t, "place", city)
+            except Exception:
+                s = None
+            seeds.append(s)
+        out = []
+        for i, t in enumerate(tastes):
+            if not seeds[i]:
+                continue
+            others = [s["entity_id"] for j, s in enumerate(seeds) if s and j != i]
+            if not others:
+                out.append({"taste": t, "fit": 1.0})
+                continue
+            try:
+                d = _exec_json("compare_audiences", {"group_a": [seeds[i]["entity_id"]],
+                                                    "group_b": others, "target_type": "place"})
+                out.append({"taste": t, "fit": _first_number(d.get("results"))})
+            except Exception:
+                out.append({"taste": t, "fit": None})
+        return out
+
     def heatmap(self, entity_id, within, limit=12):
         if self.mode == "mock":
             return {"mode": self.mode, "points": MOCK_HEATMAP[:limit]}
@@ -216,9 +348,19 @@ class QlooClient:
         seed = _seed_for(taste, "place", within)
         if not seed:
             return {"taste": taste, "city": within, "mode": self.mode, "points": [], "cards": []}
-        r = self.heatmap(seed["entity_id"], within)
-        cards = self.find_equivalents(taste, "dining", within)["results"]
-        return {"taste": taste, "city": within, "seed": seed.get("name"), "cards": cards, **r}
+        with ThreadPoolExecutor(max_workers=2) as ex:
+            f_h = ex.submit(self.heatmap, seed["entity_id"], within)
+            f_c = ex.submit(self.find_equivalents, taste, "dining", within)
+            r = f_h.result()
+            cards = f_c.result()["results"]
+        nxt = []
+        if cards and cards[0].get("id"):
+            try:
+                nxt = self.next_stops(cards[0]["id"], within)["stops"]
+            except Exception:
+                nxt = []
+        return {"taste": taste, "city": within, "seed": seed.get("name"),
+                "cards": cards, "next": nxt, **r}
 
 
 if __name__ == "__main__":

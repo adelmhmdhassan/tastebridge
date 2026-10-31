@@ -50,3 +50,8 @@ def negotiate(req: NegotiateRequest):
 @app.post("/api/heatmap")
 def heatmap(req: HeatmapRequest):
     return agent.heatmap(req.taste, req.city)
+
+
+@app.post("/api/plan")
+def plan(req: HeatmapRequest):
+    return agent.plan(req.taste, req.city)

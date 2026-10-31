@@ -84,7 +84,7 @@ def _qloo_json(cmd):
     # Windows: qloo is an npm .cmd shim (not .exe) -> subprocess needs cmd /c
     t0 = time.time()
     full = (["cmd", "/c"] + cmd) if os.name == "nt" else cmd
-    out = subprocess.run(full, capture_output=True, text=True, timeout=90, encoding="utf-8")
+    out = subprocess.run(full, capture_output=True, text=True, timeout=12, encoding="utf-8")
     _trace(cmd[1] if cmd[0] == "qloo" else " ".join(cmd[2:4]), (time.time() - t0) * 1000)
     if out.returncode != 0:
         raise RuntimeError(f"qloo failed: {out.stderr.strip()[:300]}")
@@ -170,7 +170,7 @@ def _exec_json(op, payload):
     t0 = time.time()
     cmd = ["qloo", "exec", op, "--input", json.dumps(payload)]
     full = (["cmd", "/c"] + cmd) if os.name == "nt" else cmd
-    out = subprocess.run(full, capture_output=True, text=True, timeout=90, encoding="utf-8")
+    out = subprocess.run(full, capture_output=True, text=True, timeout=12, encoding="utf-8")
     _trace("exec " + op, (time.time() - t0) * 1000)
     if out.returncode != 0:
         raise RuntimeError(f"qloo exec failed: {out.stderr.strip()[:300]}")
@@ -255,6 +255,33 @@ class QlooClient:
                                      "signal_location": city, "explain": True, "limit": limit})
         rs = d.get("results") or []
         return {"stops": [_to_card(e, city) for e in rs]}
+
+    def evening_plan(self, taste, city, steps=3):
+        """Chain recommends: dinner -> coffee -> sweets/music (first-evening plan)."""
+        if self.mode == "mock":
+            return {"plan": MOCK_EQUIVALENTS.get("dining", [])[:steps]}
+        try:
+            seed = _seed_for(taste, "place", city)
+        except Exception:
+            seed = None
+        if not seed:
+            return {"plan": []}
+        stops, current = [], seed["entity_id"]
+        for _ in range(steps):
+            try:
+                r = self.next_stops(current, city, limit=5)
+            except Exception:
+                break
+            cands = [c for c in r["stops"]
+                     if c.get("id") and c["id"] != current
+                     and all(c["id"] != s.get("id") for s in stops)]
+            cands.sort(key=lambda c: c.get("affinity") or 0, reverse=True)
+            picked = cands[0] if cands else None
+            if not picked:
+                break
+            stops.append(picked)
+            current = picked["id"]
+        return {"plan": stops}
 
     def extras(self, taste, city):
         """entity_tags + audience_demographics for the seed entity."""

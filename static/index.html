@@ -139,7 +139,7 @@ input:focus { border-color: #6b3fa0; outline: none; }
 </div>
 <div id="results"></div>
 </main>
-<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d51</b> &middot; 2026-10-30</footer>
+<footer style="text-align:center; font-size:0.68rem; color:#bbb; padding:14px;">TasteBridge &middot; build <b>d52</b> &middot; 2026-10-30</footer>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const S = {
@@ -224,7 +224,6 @@ function applyPreset(i) {
   document.getElementById("taste").value = PRESETS[i].q;
   document.getElementById("city").value = PRESETS[i].c;
   showMode(0);
-  doTranslate();
 }
 function renderChips() {
   document.getElementById("chips").innerHTML = groupTastes.map(function(t, i) {
